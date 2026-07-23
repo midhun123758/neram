@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import Footer from './Footer';
-
+import Sidebar from './Sidebar';
 const packagesData = [
   {
     id: 1,
@@ -49,7 +49,7 @@ const packagesData = [
   }
 ]
 
-export default function PackagesPage({ navigateTo }) {
+export default function PackagesPage({ navigateTo, isMenuOpen, setIsMenuOpen }) {
   // Ensure the window scrolls to top when this page mounts
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -66,15 +66,18 @@ export default function PackagesPage({ navigateTo }) {
           NERAM
         </div>
         <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-          <button className="back-btn" onClick={onBack}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            Back to Home
+          <button className="menu-btn" onClick={() => setIsMenuOpen(true)}>
+            <div className="menu-icon">
+              <span></span>
+              <span></span>
+            </div>
+            Menu
           </button>
         </div>
       </nav>
+
+      {/* Sidebar Menu */}
+      <Sidebar isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} navigateTo={navigateTo} />
 
       {/* Hero Section */}
       <header className="packages-hero">

@@ -4,7 +4,9 @@ import FogOverlay from './components/FogOverlay'
 import PackagesPage from './PackagesPage'
 import ContactPage from './ContactPage'
 import Footer from './Footer'
+import Sidebar from './Sidebar'
 import './index.css'
+import Player from '@vimeo/player'
 
 function App() {
   const appRef     = useRef(null)
@@ -13,10 +15,12 @@ function App() {
   const logoRef    = useRef(null)
   const navLogoRef = useRef(null)
   const scrollIndicatorRef = useRef(null)
+  const iframeRef = useRef(null)
 
   const [isVideoOpen, setIsVideoOpen] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isPackagesOpen, setIsPackagesOpen] = useState(false) // Keeping this for backwards compatibility if needed, but we use page routing now
+  const [isPackagesOpen, setIsPackagesOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   
   const [currentPage, setCurrentPage] = useState('home')
   const pageRef = useRef('home')
@@ -28,6 +32,38 @@ function App() {
       window.scrollTo(0, 0)
     }
   }
+
+  // Handle Preloader
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 1200)
+    return () => clearTimeout(timer)
+  }, [])
+
+  // Handle Vimeo looping at 60%
+  useEffect(() => {
+    let player = null
+    if (isVideoOpen && iframeRef.current) {
+      player = new Player(iframeRef.current)
+      let duration = 0
+      
+      player.getDuration().then((d) => {
+        duration = d
+      })
+
+      player.on('timeupdate', (data) => {
+        if (duration > 0 && data.seconds >= duration * 0.6) {
+          player.setCurrentTime(0)
+        }
+      })
+    }
+    return () => {
+      if (player) {
+        player.destroy()
+      }
+    }
+  }, [isVideoOpen])
 
   useEffect(() => {
     let currentY  = 0
@@ -251,15 +287,23 @@ function App() {
   }, [currentPage])
 
   if (currentPage === 'packages') {
-    return <PackagesPage navigateTo={navigateTo} />;
+    return <PackagesPage navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />;
   }
 
   if (currentPage === 'contact') {
-    return <ContactPage navigateTo={navigateTo} />;
+    return <ContactPage navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />;
   }
 
   return (
-    <div className="app-container" ref={appRef}>
+    <>
+      {/* Preloader */}
+      <div className={`preloader ${!isLoading ? 'fade-out' : ''}`}>
+        <div className="preloader-logo">
+          NERAM<span className="preloader-dot">.in</span>
+        </div>
+      </div>
+
+      <div className="ui-container" ref={appRef}>
 
       {/* Layer 0 — fixed background image */}
       <div className="image-container">
@@ -403,101 +447,43 @@ function App() {
 
       </div>
 
-      {/* Menu Modal Overlay */}
-      <div className={`sidebar-menu-overlay ${isMenuOpen ? 'open' : ''}`} onClick={() => setIsMenuOpen(false)}>
-        <div className={`sidebar-menu-content ${isMenuOpen ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
-          <button className="close-sidebar-btn" onClick={() => setIsMenuOpen(false)}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
-          <div className="sidebar-links">
-            <span className="sidebar-link" onClick={() => { setIsMenuOpen(false); navigateTo('home'); }}>Home</span>
-            <span className="sidebar-link" onClick={() => { setIsMenuOpen(false); navigateTo('packages'); }}>Packages</span>
-            <span className="sidebar-link" onClick={() => { setIsMenuOpen(false); navigateTo('contact'); }}>Contact</span>
-          </div>
-        </div>
-      </div>
+      {/* Sidebar Menu */}
+      <Sidebar isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} navigateTo={navigateTo} />
 
       {/* Video Modal Overlay */}
       {isVideoOpen && (
         <div className="video-modal-overlay" onClick={() => setIsVideoOpen(false)}>
-          <div className="video-modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="video-close-btn" onClick={() => setIsVideoOpen(false)}>
-              &times;
-            </button>
-            <div className="video-wrapper">
-              <iframe 
-                title="vimeo-player" 
-                src="https://player.vimeo.com/video/156891323?h=078885103c&background=1&muted=0#t=2s" 
-                width="100%" 
-                height="100%" 
-                frameBorder="0" 
-                referrerPolicy="strict-origin-when-cross-origin" 
-                allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"   
-                allowFullScreen
-              ></iframe>
-            </div>
+          <button className="close-video-btn" onClick={() => setIsVideoOpen(false)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+          <div className="video-wrapper" onClick={(e) => e.stopPropagation()}>
+            <iframe 
+              ref={iframeRef}
+              title="vimeo-player" 
+              src="https://player.vimeo.com/video/156891323?h=078885103c&background=1&muted=0" 
+              width="100%" 
+              height="100%" 
+              frameBorder="0" 
+              referrerPolicy="strict-origin-when-cross-origin" 
+              allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"   
+              allowFullScreen
+            ></iframe>
           </div>
-        </div>
-      )}
-
-      {/* Packages Modal Overlay */}
-      {isPackagesOpen && (
-        <div className="packages-modal-overlay" onClick={() => setIsPackagesOpen(false)}>
-          <div className="packages-modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="video-close-btn" onClick={() => setIsPackagesOpen(false)}>
-              &times;
-            </button>
-            <div className="packages-inner">
-              <h2 className="packages-title">Our Packages</h2>
-              <ul className="packages-list">
-                <li>
-                  <div className="package-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 20-7-14-7 14"/><path d="M12 15h7"/><path d="M12 15H5"/><path d="m12 15 2 5"/><path d="m12 15-2 5"/></svg>
-                  </div>
-                  <span className="package-separator"></span>
-                  <span className="package-bullet">&bull;</span>
-                  <span className="package-name">Camps</span>
-                </li>
-                <li>
-                  <div className="package-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="5" y="7" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><circle cx="12" cy="14" r="2"/></svg>
-                  </div>
-                  <span className="package-separator"></span>
-                  <span className="package-bullet">&bull;</span>
-                  <span className="package-name">Tours</span>
-                </li>
-                <li>
-                  <div className="package-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
-                  </div>
-                  <span className="package-separator"></span>
-                  <span className="package-bullet">&bull;</span>
-                  <span className="package-name">Treks</span>
-                </li>
-                <li>
-                  <div className="package-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                  </div>
-                  <span className="package-separator"></span>
-                  <span className="package-bullet">&bull;</span>
-                  <span className="package-name">Group Trips</span>
-                </li>
-                <li>
-                  <div className="package-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6l6-3 6 3 6-3v14l-6 3-6-3-6 3V6z"/><path d="M9 3v14"/><path d="M15 6v14"/></svg>
-                  </div>
-                  <span className="package-separator"></span>
-                  <span className="package-bullet">&bull;</span>
-                  <span className="package-name">Custom Travel Plans</span>
-                </li>
-              </ul>
-            </div>
-          </div>
+          <img 
+            src="/logo.png" 
+            alt="NERAM Logo" 
+            className="video-center-logo" 
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsVideoOpen(false);
+              navigateTo('home');
+            }} 
+          />
         </div>
       )}
 
     </div>
+    </>
   )
 }
-
 export default App

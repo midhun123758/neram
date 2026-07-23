@@ -22,6 +22,45 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Preloader ───────────────────────────────────────────────────────────── */
+.preloader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #050806;
+  z-index: 999999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.8s cubic-bezier(0.77, 0, 0.175, 1), visibility 0.8s;
+}
+
+.preloader.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.preloader-logo {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: #fff;
+  animation: pulse 1.5s infinite ease-in-out alternate;
+}
+
+.preloader-dot {
+  color: #3b8254;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.98); opacity: 0.8; }
+  100% { transform: scale(1.02); opacity: 1; }
+}
+
 #root {
   min-height: 100%;
 }
@@ -164,7 +203,7 @@ body {
   position: absolute;
   opacity: 0;
   transform: translateY(80px);
-  transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1), transform 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .deco-item.reveal-active {
@@ -195,7 +234,7 @@ body {
   left: 10%;
   width: 25vw;
   height: 55vh;
-  transition-delay: 0.3s;
+  transition-delay: 0.7s;
 }
 
 /* 3. Tall image, right side with backdrop */
@@ -204,7 +243,7 @@ body {
   right: 8%;
   width: 28vw;
   height: 60vh;
-  transition-delay: 0.5s;
+  transition-delay: 1.3s;
 }
 
 
@@ -215,7 +254,7 @@ body {
   right: 12%;
   width: 35vw;
   height: 25vh;
-  transition-delay: 0.7s;
+  transition-delay: 1.9s;
 }
 
 .philosophy-inner {
@@ -689,6 +728,24 @@ body {
 
 .video-close-btn:hover {
   opacity: 1;
+}
+
+.video-center-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 150px;
+  opacity: 0.8;
+  cursor: pointer;
+  z-index: 1000;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: auto;
+}
+
+.video-center-logo:hover {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.05);
 }
 
 /* ── Packages Modal ──────────────────────────────────────────────────────── */
