@@ -1,0 +1,721 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  /* Let html grow with content so body.scrollHeight is correct */
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100%;   /* NOT height:100% — that collapses scrollHeight to viewport */
+  overflow-x: hidden;
+  font-family: 'Inter', sans-serif;
+  background: #000;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100%;
+}
+
+/* ── Main wrapper ─────────────────────────────────────────────────────────────
+   450vh gives enough room for phase 1 (1vh) + phase 1.5 (0.5vh) + phase 2, 3 and footer scroll
+──────────────────────────────────────────────────────────────────────────── */
+.app-container {
+  width: 100vw;
+  height: 450vh;
+  position: relative;
+}
+
+/* ── Background image — fixed, never scrolls ─────────────────────────────── */
+.image-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 0%;
+  display: block;
+  filter: brightness(0.7) contrast(1.1) saturate(0.85);
+  will-change: object-position;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ── Fog canvas — fixed above image ──────────────────────────────────────── */
+.canvas-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ── Navbar — fixed, always visible ─────────────────────────────────────── */
+.ui-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* ── Centered Logo (Phase 1.5 Reveal) ────────────────────────────────────── */
+.center-logo {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50vw;
+  max-width: 700px;
+  z-index: 60;
+  pointer-events: none;
+  /* Mask creates a soft left-to-right wipe based on --reveal custom property */
+  -webkit-mask-image: linear-gradient(to right, black var(--reveal, -20%), transparent calc(var(--reveal, -20%) + 15%));
+  mask-image: linear-gradient(to right, black var(--reveal, -20%), transparent calc(var(--reveal, -20%) + 15%));
+  will-change: mask-image, -webkit-mask-image;
+}
+
+/* ── Scroll content — container for all dark sections ───────────────────────
+   JS animates transform: translateY(Xpx).
+   Phase 1 (image panning): stays at translateY(100vh) — invisible.
+   Phase 2 (after image done): scrolls up naturally.
+──────────────────────────────────────────────────────────────────────────── */
+.scroll-content {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100vh);
+  will-change: transform;
+}
+
+
+/* ── Philosophy specific ─────────────────────────────────────────────────── */
+.philosophy-section {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6rem 10vw;
+  background-color: #0d0d0d;
+  overflow: hidden;
+}
+
+/* ── Decorative Images Layout ──────────────────────────────────────────── */
+.section-video-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.25; /* Keep it subtle so text and images are readable */
+  pointer-events: none;
+}
+
+.section-video-bg iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* Guarantee 16:9 aspect ratio and large enough to cover the tallest possible sections */
+  width: max(100vw, 300vh);
+  height: max(56.25vw, 168.75vh);
+  pointer-events: none;
+}
+
+.deco-gallery {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1; /* Above the video */
+}
+
+.deco-item {
+  position: absolute;
+  opacity: 0;
+  transform: translateY(80px);
+  transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1), transform 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.deco-item.reveal-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.deco-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  filter: brightness(0.65) contrast(1.1);
+}
+
+/* 1. Large wide image, top left */
+.deco-item.img-1 {
+  top: 5%;
+  left: -5%;
+  width: 45vw;
+  height: 38vh;
+  transition-delay: 0.1s;
+}
+
+/* 2. Large tall image, bottom left */
+.deco-item.img-2 {
+  bottom: -5%;
+  left: 10%;
+  width: 25vw;
+  height: 55vh;
+  transition-delay: 0.3s;
+}
+
+/* 3. Tall image, right side with backdrop */
+.deco-item.img-3 {
+  top: 15%;
+  right: 8%;
+  width: 28vw;
+  height: 60vh;
+  transition-delay: 0.5s;
+}
+
+
+
+/* 4. Wide image, bottom right */
+.deco-item.img-4 {
+  bottom: 8%;
+  right: 12%;
+  width: 35vw;
+  height: 25vh;
+  transition-delay: 0.7s;
+}
+
+.philosophy-inner {
+  position: relative;
+  z-index: 10; /* Keep text above the decorative images */
+  max-width: 1200px;
+  width: 100%;
+  display: flex;
+  gap: 4rem;
+}
+
+
+
+
+.vertical-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.25em;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 400;
+  margin-top: 1rem;
+  flex-shrink: 0;
+}
+
+.philosophy-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.philosophy-content h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 4.5vw, 3.8rem);
+  font-weight: 400;
+  line-height: 1.2;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.philosophy-content p {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  line-height: 1.9;
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 560px;
+}
+
+/* ── Collage specific ────────────────────────────────────────────────────── */
+.collage-section {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6rem;
+  padding: 6rem 10vw;
+  background-color: #080808;
+  overflow: hidden;
+}
+
+.collage-container {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+}
+
+.collage-slices {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+}
+
+.slice {
+  flex: 1;
+  height: 100%;
+  background-image: url('/collage.jpg');
+  background-size: 500% 100%; /* 5 slices = 500% width */
+  opacity: 0;
+  transform: translateY(150px);
+  transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.slice-1 { background-position: 0% 50%; }
+.slice-2 { background-position: 25% 50%; }
+.slice-3 { background-position: 50% 50%; }
+.slice-4 { background-position: 75% 50%; }
+.slice-5 { background-position: 100% 50%; }
+
+.collage-container.reveal-active .slice {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.collage-container.reveal-active .slice-1 { transition-delay: 0.2s; }
+.collage-container.reveal-active .slice-2 { transition-delay: 0.7s; }
+.collage-container.reveal-active .slice-3 { transition-delay: 1.2s; }
+.collage-container.reveal-active .slice-4 { transition-delay: 1.7s; }
+.collage-container.reveal-active .slice-5 { transition-delay: 2.2s; }
+
+.collage-inner {
+  flex: 1;
+  display: flex;
+  gap: 4rem;
+}
+
+.collage-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem; /* Decreased gap to bring the explanation closer to the heading */
+}
+
+.collage-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+}
+
+.collage-content h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 4.5vw, 3.8rem);
+  font-weight: 400;
+  line-height: 1.2;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.text-green {
+  color: #4ade80; /* A beautiful, vibrant nature green */
+  font-style: italic; /* Optional, adds a nice touch for the brand name */
+}
+
+.collage-description {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.25rem; /* Noticeably larger */
+  font-weight: 500;   /* Bolder */
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.9); /* Even brighter for better contrast with bold */
+  max-width: 550px;
+  letter-spacing: 0.01em;
+  text-align: justify; 
+}
+
+.text-highlight {
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem; /* Make the sign-off proportionally larger */
+  font-style: italic;
+  color: #fff;
+  font-weight: 600; /* Bolder sign-off */
+  letter-spacing: 0.04em;
+  margin-top: 1.5rem;
+  text-align: left; 
+}
+
+/* ── Navbar ──────────────────────────────────────────────────────────────── */
+.navbar {
+  pointer-events: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2.5rem 4rem;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%);
+  width: 100%;
+}
+
+.logo {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0;
+  animation: fadeIn 1.5s ease 0.5s forwards;
+}
+
+.nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  opacity: 0;
+  animation: fadeIn 1.5s ease 0.5s forwards;
+}
+
+.lang-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  cursor: pointer;
+}
+
+.lang-switch span.active {
+  color: #fff;
+  position: relative;
+}
+
+.lang-switch span.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: #fff;
+}
+
+.separator {
+  width: 3px;
+  height: 3px;
+  background-color: rgba(255,255,255,0.3);
+  border-radius: 50%;
+  margin: 0 0.25rem;
+}
+
+.menu-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  padding: 0;
+  pointer-events: auto;
+}
+
+.menu-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 400;
+}
+
+.menu-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 22px;
+}
+
+.menu-lines span {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background-color: #fff;
+  transition: transform 0.3s ease;
+}
+
+.menu-btn:hover .menu-lines span:nth-child(1) {
+  transform: translateY(3.5px) rotate(45deg);
+}
+
+.menu-btn:hover .menu-lines span:nth-child(2) {
+  transform: translateY(-3.5px) rotate(-45deg);
+}
+
+/* ── Keyframes ───────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Video Modal ─────────────────────────────────────────────────────────── */
+.video-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.9);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.video-modal-content {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  overflow: hidden; /* Hide anything that spills outside */
+}
+
+.video-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.video-wrapper iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: max(100vw, 177.77vh);
+  height: max(56.25vw, 100vh);
+  pointer-events: none; /* Disables hovering on the iframe, perfectly hiding the Vimeo UI */
+}
+
+.video-close-btn {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 3rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  z-index: 2000;
+}
+
+.video-close-btn:hover {
+  opacity: 1;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.footer-section {
+  width: 100%;
+  background-color: #032014; /* Deep dark green */
+  padding: 6rem 10vw;
+  color: #fff;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+}
+
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.footer-logo {
+  font-family: 'Inter', sans-serif;
+  font-size: 2rem;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: #fff;
+}
+
+.footer-tagline {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr;
+  gap: 4rem;
+}
+
+.about-col h3 {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+.about-col p {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 400px;
+}
+
+.footer-heading {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #eab308; /* Yellow/Gold */
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+}
+
+.footer-col ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.footer-col ul li, .footer-col ul a {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: color 0.3s ease;
+}
+
+.footer-col ul a:hover {
+  color: #eab308;
+}
+
+.footer-col ul li svg {
+  width: 18px;
+  height: 18px;
+  color: #fff;
+  opacity: 0.8;
+}
+
+/* ── Responsive Mobile Styles ────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .philosophy-section, .collage-section, .footer-section {
+    padding: 4rem 5vw;
+  }
+  
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+  
+  .about-col p {
+    max-width: 100%;
+  }
+  
+  .collage-section, .collage-inner, .philosophy-inner {
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+  
+  .vertical-text {
+    writing-mode: horizontal-tb;
+    transform: none;
+    margin-top: 0;
+    margin-bottom: -1rem;
+  }
+  
+  .collage-container {
+    max-width: 100%;
+    order: -1; /* Ensure collage image appears above text on mobile */
+  }
+
+  .navbar {
+    padding: 1.5rem 5vw;
+  }
+
+  .nav-controls {
+    gap: 1.5rem;
+  }
+  
+  .deco-gallery {
+    display: none; /* Completely remove the photos on mobile view */
+  }
+
+  /* Typography improvements for mobile */
+  .collage-content h2 {
+    font-size: 2.2rem;
+    line-height: 1.15;
+  }
+
+  .collage-description {
+    font-size: 1rem;
+    line-height: 1.6;
+    text-align: left; /* Justify creates weird word spacing on narrow mobile screens */
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .text-highlight {
+    font-size: 1.3rem;
+    margin-top: 1rem;
+  }
+}
