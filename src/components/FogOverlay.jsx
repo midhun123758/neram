@@ -38,11 +38,11 @@ const fragmentShader = `
     );
   }
 
-  // 6-octave fBm with slight rotation per octave
+  // 4-octave fBm (optimized from 6)
   float fbm(vec2 p) {
     float v = 0.0, a = 0.52;
     mat2 rot = mat2(0.8660, 0.5, -0.5, 0.8660); // 30° rotation
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 4; i++) {
       v += a * vnoise(p);
       p  = rot * p * 2.05;
       a *= 0.49;
@@ -60,11 +60,10 @@ const fragmentShader = `
     // Foreground layer: noticeably faster for depth
     vec2 wind2 = vec2(uTime * 0.35, sin(uTime * 0.08) * 0.015);
 
-    // ── 3. Triple domain-warp fBm ──────────────────────────────────────────
-    // Background layer — large, heavy mass
+    // ── 3. Optimized double domain-warp fBm ────────────────────────────────
+    // Background layer — large, heavy mass (1 warp instead of 2)
     float q1 = fbm(uv + wind1);
-    float r1 = fbm(uv + vec2(q1 * 0.9) + wind1);
-    float f1 = fbm(uv + vec2(r1 * 0.8) + wind1);
+    float f1 = fbm(uv + vec2(q1 * 0.8) + wind1);
 
     // Foreground layer — thinner, faster wisps
     float q2 = fbm(uv * 1.3 + wind2);

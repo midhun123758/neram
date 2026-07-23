@@ -1,6 +1,9 @@
 import React, { Suspense, useEffect, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import FogOverlay from './components/FogOverlay'
+import PackagesPage from './PackagesPage'
+import ContactPage from './ContactPage'
+import Footer from './Footer'
 import './index.css'
 
 function App() {
@@ -9,30 +12,58 @@ function App() {
   const contentRef = useRef(null)
   const logoRef    = useRef(null)
   const navLogoRef = useRef(null)
+  const scrollIndicatorRef = useRef(null)
 
   const [isVideoOpen, setIsVideoOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isPackagesOpen, setIsPackagesOpen] = useState(false) // Keeping this for backwards compatibility if needed, but we use page routing now
+  
+  const [currentPage, setCurrentPage] = useState('home')
+  const pageRef = useRef('home')
+  
+  const navigateTo = (page) => {
+    setCurrentPage(page)
+    pageRef.current = page
+    if (page === 'home') {
+      window.scrollTo(0, 0)
+    }
+  }
 
   useEffect(() => {
     let currentY  = 0
     let targetY   = 0
+    let previousRenderedY = -1
     let rafId     = null
     let touchStartY = 0
+    let logoTargetX = 0
+    let logoTargetY = 0
 
     const lerp = (a, b, t) => a + (b - a) * t
 
-    // ── Update container height dynamically ──────────────────────────────────
-    const updateHeight = () => {
-      if (appRef.current && contentRef.current) {
-        const vh = window.innerHeight
-        const phase1_5End = vh * 1.5 // phases before dark content appears
-        const contentH = contentRef.current.scrollHeight
-        // We add vh to contentH because the dark section starts fully off-screen (at 100vh)
-        // and needs 1 full vh of scrolling just to slide in to position.
-        appRef.current.style.height = `${phase1_5End + vh + contentH}px`
+      // ── Update container height dynamically ──────────────────────────────────
+      const updateHeight = () => {
+        if (pageRef.current !== 'home') return
+        if (appRef.current && contentRef.current) {
+          const vh = window.innerHeight
+          const phase1_5End = vh * 1.5 // phases before dark content appears
+          const contentH = contentRef.current.scrollHeight
+          // We add vh to contentH because the dark section starts fully off-screen (at 100vh)
+          // and needs 1 full vh of scrolling just to slide in to position.
+          appRef.current.style.height = `${phase1_5End + vh + contentH}px`
+          
+          // Calculate exact destination for the flying logo
+          if (navLogoRef.current) {
+            const navRect = navLogoRef.current.getBoundingClientRect()
+            logoTargetX = navRect.left + navRect.width / 2
+            logoTargetY = navRect.top + navRect.height / 2
+          }
+          
+          // Force a re-render next tick if layout changes
+          previousRenderedY = -1
+        }
       }
-    }
-    
-    // Initial measure + listen for resize
+
+    // ── Initial measure + listen for resize
     setTimeout(updateHeight, 100)
     window.addEventListener('resize', updateHeight)
 
@@ -44,21 +75,23 @@ function App() {
 
     // ── Mouse wheel ──────────────────────────────────────────────────────────
     const onWheel = (e) => {
+      if (pageRef.current !== 'home') return
       e.preventDefault()
       // Normalize across trackpads (small deltaY) and mice (large deltaY)
-      // Lowered sensitivity to make scrolling "less fast"
       const delta = Math.abs(e.deltaY) > 50
-        ? e.deltaY * 0.35   // mouse wheel — slow and deliberate
-        : e.deltaY * 0.8    // trackpad — slower
+        ? e.deltaY * 0.6   // mouse wheel — faster and more responsive
+        : e.deltaY * 1.2   // trackpad
       targetY += delta
       clampTarget()
     }
 
     // ── Touch support ────────────────────────────────────────────────────────
     const onTouchStart = (e) => {
+      if (pageRef.current !== 'home') return
       touchStartY = e.touches[0].clientY
     }
     const onTouchMove = (e) => {
+      if (pageRef.current !== 'home') return
       e.preventDefault()
       const dy = touchStartY - e.touches[0].clientY
       targetY += dy * 1.5
@@ -68,26 +101,39 @@ function App() {
 
     // ── rAF loop ─────────────────────────────────────────────────────────────
     const tick = () => {
+      if (pageRef.current !== 'home') {
+        rafId = requestAnimationFrame(tick)
+        return
+      }
+
       const diff = targetY - currentY
 
       // Snap when close enough to avoid infinite tiny updates
-      if (Math.abs(diff) < 0.05) {
+      if (Math.abs(diff) < 0.1) {
         currentY = targetY
       } else {
-        // Lowered lerp factor from 0.075 to 0.045 for "more smoothly" feel
-        currentY = lerp(currentY, targetY, 0.045) 
+        // Higher lerp factor for snappier, less laggy feel
+        currentY = lerp(currentY, targetY, 0.085) 
       }
+
+      // ── Optimization: Skip heavy DOM updates if no scroll change
+      if (Math.abs(currentY - previousRenderedY) < 0.05) {
+        rafId = requestAnimationFrame(tick)
+        return
+      }
+      previousRenderedY = currentY
 
       window.scrollTo(0, Math.round(currentY))
 
+      const vw = window.innerWidth
       const vh = window.innerHeight
 
       // ── Phase 1 (0 → 1.0*vh): pan image top → bottom ────────────────────
-      // Takes a full screen height to pan, so it's slow and fully completes first.
       const phase1End = vh * 1.0
       const phase1 = Math.min(Math.max(currentY / phase1End, 0), 1)
       if (imgRef.current) {
-        imgRef.current.style.objectPosition = `center ${phase1 * 100}%`
+        // Use GPU-accelerated transform instead of expensive objectPosition paint
+        imgRef.current.style.transform = `translateY(-${phase1 * 15}vh)`
       }
 
       // ── Phase 1.5 (1.0*vh → 1.5*vh): smooth logo writing reveal ─────────
@@ -121,14 +167,18 @@ function App() {
       // phase2 tracks just the first 100vh of this slide (0 to 1)
       const phase2 = Math.min(contentScroll / vh, 1)
 
+      const isMobile = window.innerWidth <= 768
+      const speedFactor = isMobile ? 1.6 : 1.15
+      const logoPhase = Math.min(phase2 * speedFactor, 1)
+
       if (navLogoRef.current) {
-        if (phase2 > 0) {
+        if (logoPhase > 0) {
           // Disable CSS animation so inline opacity can take effect
           navLogoRef.current.style.animation = 'none'
           
-          if (phase2 >= 0.8) {
+          if (logoPhase >= 0.8) {
             // Fade out smoothly in the final 20%
-            navLogoRef.current.style.opacity = Math.max(0, 1 - (phase2 - 0.8) * 5)
+            navLogoRef.current.style.opacity = Math.max(0, 1 - (logoPhase - 0.8) * 5)
           } else {
             navLogoRef.current.style.opacity = 1
           }
@@ -139,17 +189,26 @@ function App() {
         }
       }
 
+      if (scrollIndicatorRef.current) {
+        // Fade out in the first 20vh of scrolling
+        const scrollOpacity = Math.max(0, 1 - (currentY / (vh * 0.2)))
+        scrollIndicatorRef.current.style.opacity = scrollOpacity
+      }
+
       if (logoRef.current) {
         // -20% to 100% to ensure the mask fully clears the width
         logoRef.current.style.setProperty('--reveal', `${(phase1_5 * 120) - 20}%`)
         
         // During the first 100vh (phase2), logo moves to the top left (navbar position).
-        // It stops scrolling so it acts as the fixed navbar logo.
-        const translateX = `calc(-50% - ${phase2 * 50}vw + ${phase2 * 9}rem)` 
-        const translateY = `calc(-50% - ${phase2 * 50}vh + ${phase2 * 3.5}rem)`
-        const scale = 1 - (phase2 * 0.8) // shrink to fit navbar
+        // Calculate exact movement from center of screen to the navbar logo center
+        const maxMoveX = logoTargetX - (vw / 2)
+        const maxMoveY = logoTargetY - (vh / 2)
         
-        logoRef.current.style.transform = `translate(${translateX}, ${translateY}) scale(${scale})`
+        const moveX = logoPhase * maxMoveX
+        const moveY = logoPhase * maxMoveY
+        const scale = 1 - (logoPhase * 0.8) // shrink to fit navbar
+        
+        logoRef.current.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px)) scale(${scale})`
       }
 
       rafId = requestAnimationFrame(tick)
@@ -189,7 +248,15 @@ function App() {
       cancelAnimationFrame(rafId)
       observer.disconnect()
     }
-  }, [])
+  }, [currentPage])
+
+  if (currentPage === 'packages') {
+    return <PackagesPage navigateTo={navigateTo} />;
+  }
+
+  if (currentPage === 'contact') {
+    return <ContactPage navigateTo={navigateTo} />;
+  }
 
   return (
     <div className="app-container" ref={appRef}>
@@ -208,9 +275,9 @@ function App() {
       {/* Layer 1 — fog WebGL canvas, limited DPR for performance */}
       <div className="canvas-container">
         <Canvas
-          dpr={Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 2)}
+          dpr={1}
           frameloop="always"
-          gl={{ antialias: false, powerPreference: 'high-performance' }}
+          gl={{ antialias: false, powerPreference: 'high-performance', alpha: true }}
         >
           <Suspense fallback={null}>
             <FogOverlay />
@@ -223,12 +290,7 @@ function App() {
         <nav className="navbar">
           <div className="logo" ref={navLogoRef} onClick={() => setIsVideoOpen(true)}>NERAM</div>
           <div className="nav-controls">
-            <div className="lang-switch">
-              <span className="active">en</span>
-              <span className="separator"></span>
-              <span>ja</span>
-            </div>
-            <button className="menu-btn">
+            <button className="menu-btn" onClick={() => setIsMenuOpen(true)}>
               <span className="menu-text">menu</span>
               <div className="menu-lines">
                 <span></span>
@@ -237,6 +299,12 @@ function App() {
             </button>
           </div>
         </nav>
+        
+        {/* Scroll Indicator */}
+        <div className="scroll-indicator" ref={scrollIndicatorRef}>
+          <span>SCROLL</span>
+          <div className="scroll-line"></div>
+        </div>
       </div>
 
       {/* Layer 2.5 — Centered logo revealed via scroll */}
@@ -315,61 +383,38 @@ function App() {
                 <span className="text-green" onClick={() => setIsVideoOpen(true)} style={{ cursor: 'pointer' }}>NERAM</span>
               </h2>
               <p className="collage-description">
-                NERAM crafts unforgettable travel experiences that bring together nature, adventure, and culture. From peaceful camps and mountain treks to group expeditions and personalized journeys, every trip is thoughtfully designed to inspire exploration, create lasting memories, and help you reconnect with the world around you.
-                <span className="text-highlight">Explore More. Live Better.</span>
+                <strong>Neram.in</strong> — More than just a trip—it’s a reset button for your mind. Camping, trekking, and outdoor journeys made for real connection.
+                <br /><br />
+                Turning every journey into an unforgettable experience.<br />
+                Plan your next escape with us today.
               </p>
+              
+              <button className="primary-explore-btn" onClick={() => navigateTo('packages')}>
+                <span>Explore Packages</span>
+                <div className="btn-arrow">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </div>
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Footer Section */}
-        <footer className="footer-section">
-          <div className="footer-content">
-            
-            <div className="footer-brand">
-              <h2 className="footer-logo">NERAM</h2>
-              <p className="footer-tagline">Nature. Travel. Healing.</p>
-            </div>
-            
-            <div className="footer-grid">
-              <div className="footer-col about-col">
-                <h3>Nature. Travel. Healing.</h3>
-                <p>
-                  NERAM creates unforgettable trekking, camping, and outdoor experiences that bring people closer to nature and meaningful connections.
-                </p>
-              </div>
-              
-              <div className="footer-col links-col">
-                <h4 className="footer-heading">EXPLORE</h4>
-                <ul>
-                  <li><a href="#">All Packages</a></li>
-                  <li><a href="#">About</a></li>
-                  <li><a href="#">Contact</a></li>
-                </ul>
-              </div>
-              
-              <div className="footer-col reach-col">
-                <h4 className="footer-heading">REACH US</h4>
-                <ul>
-                  <li>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                    WhatsApp
-                  </li>
-                  <li>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                    neram.inn@gmail.com
-                  </li>
-                  <li>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-                    @neram.in
-                  </li>
-                </ul>
-              </div>
-            </div>
-            
-          </div>
-        </footer>
+        <Footer navigateTo={navigateTo} />
 
+      </div>
+
+      {/* Menu Modal Overlay */}
+      <div className={`sidebar-menu-overlay ${isMenuOpen ? 'open' : ''}`} onClick={() => setIsMenuOpen(false)}>
+        <div className={`sidebar-menu-content ${isMenuOpen ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
+          <button className="close-sidebar-btn" onClick={() => setIsMenuOpen(false)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+          <div className="sidebar-links">
+            <span className="sidebar-link" onClick={() => { setIsMenuOpen(false); navigateTo('home'); }}>Home</span>
+            <span className="sidebar-link" onClick={() => { setIsMenuOpen(false); navigateTo('packages'); }}>Packages</span>
+            <span className="sidebar-link" onClick={() => { setIsMenuOpen(false); navigateTo('contact'); }}>Contact</span>
+          </div>
+        </div>
       </div>
 
       {/* Video Modal Overlay */}
@@ -390,6 +435,62 @@ function App() {
                 allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"   
                 allowFullScreen
               ></iframe>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Packages Modal Overlay */}
+      {isPackagesOpen && (
+        <div className="packages-modal-overlay" onClick={() => setIsPackagesOpen(false)}>
+          <div className="packages-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="video-close-btn" onClick={() => setIsPackagesOpen(false)}>
+              &times;
+            </button>
+            <div className="packages-inner">
+              <h2 className="packages-title">Our Packages</h2>
+              <ul className="packages-list">
+                <li>
+                  <div className="package-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 20-7-14-7 14"/><path d="M12 15h7"/><path d="M12 15H5"/><path d="m12 15 2 5"/><path d="m12 15-2 5"/></svg>
+                  </div>
+                  <span className="package-separator"></span>
+                  <span className="package-bullet">&bull;</span>
+                  <span className="package-name">Camps</span>
+                </li>
+                <li>
+                  <div className="package-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="5" y="7" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><circle cx="12" cy="14" r="2"/></svg>
+                  </div>
+                  <span className="package-separator"></span>
+                  <span className="package-bullet">&bull;</span>
+                  <span className="package-name">Tours</span>
+                </li>
+                <li>
+                  <div className="package-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
+                  </div>
+                  <span className="package-separator"></span>
+                  <span className="package-bullet">&bull;</span>
+                  <span className="package-name">Treks</span>
+                </li>
+                <li>
+                  <div className="package-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  </div>
+                  <span className="package-separator"></span>
+                  <span className="package-bullet">&bull;</span>
+                  <span className="package-name">Group Trips</span>
+                </li>
+                <li>
+                  <div className="package-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6l6-3 6 3 6-3v14l-6 3-6-3-6 3V6z"/><path d="M9 3v14"/><path d="M15 6v14"/></svg>
+                  </div>
+                  <span className="package-separator"></span>
+                  <span className="package-bullet">&bull;</span>
+                  <span className="package-name">Custom Travel Plans</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
