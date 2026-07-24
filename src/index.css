@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap');
 
 * {
   margin: 0;
@@ -15,7 +15,7 @@ html {
 body {
   min-height: 100%;   /* NOT height:100% — that collapses scrollHeight to viewport */
   overflow-x: hidden;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   background: #000;
   color: #fff;
   -webkit-font-smoothing: antialiased;
@@ -44,7 +44,7 @@ body {
 }
 
 .preloader-logo {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 1.5rem;
   font-weight: 500;
   letter-spacing: 0.18em;
@@ -293,7 +293,7 @@ body {
 
 
 .vertical-text {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cinzel', serif;
   font-size: 0.75rem;
   letter-spacing: 0.25em;
   writing-mode: vertical-rl;
@@ -312,7 +312,7 @@ body {
 }
 
 .philosophy-content h2 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cinzel', serif;
   font-size: clamp(2rem, 4.5vw, 3.8rem);
   font-weight: 400;
   line-height: 1.2;
@@ -321,7 +321,7 @@ body {
 }
 
 .philosophy-content p {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 1rem;
   line-height: 1.9;
   color: rgba(255, 255, 255, 0.6);
@@ -415,7 +415,7 @@ body {
 }
 
 .company-content h2 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cinzel', serif;
   font-size: clamp(2.5rem, 5vw, 4rem);
   font-weight: 400;
   color: #fff;
@@ -430,19 +430,20 @@ body {
 
 .company-text p {
   font-family: 'Playfair Display', serif;
-  font-size: clamp(1.1rem, 2vw, 1.35rem);
-  line-height: 1.8;
-  color: rgba(255, 255, 255, 0.9);
-  letter-spacing: 0.01em;
-  max-width: 650px;
+  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+  line-height: 2.2;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 0.02em;
+  max-width: 800px;
   margin: 0 auto;
+  text-align: center;
 }
 
 .company-side-text {
   position: absolute;
   top: 15%;
   left: 5vw;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 0.75rem;
   letter-spacing: 0.25em;
   writing-mode: vertical-rl;
@@ -484,7 +485,7 @@ body {
 }
 
 .horizontal-indicator-btn span {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 0.65rem;
   letter-spacing: 0.25em;
   color: #fff;
@@ -599,7 +600,7 @@ body {
 }
 
 .collage-subtitle {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cinzel', serif;
   font-size: 0.85rem;
   letter-spacing: 0.15em;
   color: rgba(255, 255, 255, 0.5);
@@ -607,7 +608,7 @@ body {
 }
 
 .collage-content h2 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cinzel', serif;
   font-size: clamp(2rem, 4.5vw, 3.8rem);
   font-weight: 400;
   line-height: 1.2;
@@ -621,7 +622,7 @@ body {
 }
 
 .collage-description {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cinzel', serif;
   font-size: 1.25rem; /* Noticeably larger */
   font-weight: 500;   /* Bolder */
   line-height: 1.8;
@@ -647,7 +648,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 50px;
   color: #fff;
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cinzel', serif;
   font-size: 0.9rem;
   font-weight: 500;
   text-transform: uppercase;
@@ -692,7 +693,7 @@ body {
 }
 
 .logo {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 0.95rem;
   font-weight: 500;
   letter-spacing: 0.18em;
@@ -758,7 +759,7 @@ body {
 }
 
 .menu-text {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -866,7 +867,7 @@ body {
 
 .sidebar-link {
   color: #fff;
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cinzel', serif;
   font-size: 2.5rem;
   text-decoration: none;
   cursor: pointer;
@@ -1014,7 +1015,7 @@ body {
 }
 
 .packages-title {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cinzel', serif;
   font-size: 2.5rem;
   color: #fff;
   margin-bottom: 3rem;
@@ -1082,7 +1083,7 @@ body {
 }
 
 .package-name {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 1.4rem;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.9);
@@ -1104,7 +1105,7 @@ body {
 }
 
 .scroll-indicator span {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 0.65rem;
   letter-spacing: 0.3em;
   font-weight: 500;
@@ -1139,7 +1140,7 @@ body {
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .footer-section {
   width: 100%;
-  background-color: #032014; /* Deep dark green */
+  background-color: #050806; /* Black */
   padding: 6rem 10vw;
   color: #fff;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -1160,7 +1161,7 @@ body {
 }
 
 .footer-logo {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 2rem;
   letter-spacing: 0.1em;
   font-weight: 700;
@@ -1168,7 +1169,7 @@ body {
 }
 
 .footer-tagline {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 0.85rem;
   letter-spacing: 0.05em;
   color: rgba(255, 255, 255, 0.6);
@@ -1181,14 +1182,14 @@ body {
 }
 
 .about-col h3 {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 1.5rem;
   font-weight: 500;
   margin-bottom: 1.5rem;
 }
 
 .about-col p {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 0.95rem;
   line-height: 1.8;
   color: rgba(255, 255, 255, 0.7);
@@ -1196,11 +1197,11 @@ body {
 }
 
 .footer-heading {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: #eab308; /* Yellow/Gold */
+  color: #387a53; /* Dark green */
   margin-bottom: 1.5rem;
   text-transform: uppercase;
 }
@@ -1213,7 +1214,7 @@ body {
 }
 
 .footer-col ul li, .footer-col ul a {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 0.95rem;
   color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
@@ -1224,7 +1225,7 @@ body {
 }
 
 .footer-col ul a:hover {
-  color: #eab308;
+  color: #387a53;
 }
 
 .footer-col ul li svg {
@@ -1344,7 +1345,7 @@ body {
   min-height: 100vh;
   background-color: #050806;
   color: #fff;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   position: relative;
   overflow-x: hidden;
 }
@@ -1363,7 +1364,7 @@ body {
 }
 
 .packages-navbar .logo {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 0.95rem;
   font-weight: 500;
   letter-spacing: 0.18em;
@@ -1381,7 +1382,7 @@ body {
   padding: 0.75rem 1.5rem;
   border-radius: 50px;
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -1440,7 +1441,7 @@ body {
 }
 
 .packages-page-title {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cinzel', serif;
   font-size: 4rem;
   font-weight: 400;
   margin-bottom: 1rem;
@@ -1449,7 +1450,7 @@ body {
 }
 
 .packages-page-subtitle {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 1.2rem;
   color: rgba(255, 255, 255, 0.8);
   letter-spacing: 0.05em;
@@ -1507,7 +1508,7 @@ body {
 
 .package-card-content {
   position: relative;
-  padding: 0 0.5rem;
+  padding: 0; /* Remove padding so text perfectly aligns with the image edges */
   display: flex;
   flex-direction: column;
 }
@@ -1516,16 +1517,16 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 0.7rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: #c99339; /* Gold color matching screenshot */
+  color: #387a53; /* Dark green */
   margin-bottom: 0.75rem;
 }
 
 .package-card-title {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 1.8rem;
   font-weight: 800;
   color: #fff; /* White title for dark theme */
@@ -1534,7 +1535,7 @@ body {
 }
 
 .package-card-desc {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cinzel', serif;
   font-size: 0.95rem;
   color: rgba(255, 255, 255, 0.7); /* Light grey for dark theme */
   line-height: 1.6;
@@ -1547,11 +1548,173 @@ body {
   }
   .packages-page-title {
     font-size: 2.5rem;
+    text-align: center;
+  }
+  .packages-page-subtitle {
+    font-size: 1rem;
+    text-align: center;
   }
   .packages-main-content {
     padding: 3rem 1.5rem;
   }
-  .package-card {
-    aspect-ratio: 1;
+  .packages-grid {
+    grid-template-columns: 1fr;
+    gap: 4rem;
   }
+  .package-card-img-wrapper {
+    aspect-ratio: 4 / 3; /* slightly wider image on mobile so it doesn't take up the entire vertical screen */
+    border-radius: 4px;
+  }
+}
+
+/* ── Images/Gallery Horizontal Stacking Styles ─────────────────────────────── */
+.horizontal-gallery-wrapper {
+  background-color: #000;
+  /* 500vh forces exactly 5 viewport heights of scrolling */
+  height: 500vh;
+  position: relative;
+}
+
+.horizontal-sticky-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.horizontal-track {
+  display: flex;
+  height: 100%;
+  width: 500vw;
+  will-change: transform;
+}
+
+.images-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 2.5rem 5vw;
+  z-index: 1000;
+  mix-blend-mode: difference;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 1s ease 0.8s, transform 1s cubic-bezier(0.19, 1, 0.22, 1) 0.8s;
+}
+
+.horizontal-gallery-wrapper:not(.has-entered) .images-navbar {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.images-navbar .nav-logo {
+  font-family: 'Cinzel', serif;
+  font-size: 1.5rem;
+  letter-spacing: 0.25em;
+  color: #fff;
+}
+
+.images-navbar .nav-menu-btn {
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.2em;
+  color: #fff;
+  cursor: pointer;
+}
+
+.gallery-panel {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gallery-panel-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: -1;
+  will-change: transform, clip-path;
+  clip-path: inset(0%);
+  transition: clip-path 2s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.horizontal-gallery-wrapper:not(.has-entered) .gallery-panel-bg {
+  clip-path: inset(30% 15% 30% 15%);
+}
+
+.gallery-panel-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.65) contrast(1.1);
+  will-change: transform;
+  transform: scale(1);
+  transition: transform 2s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.horizontal-gallery-wrapper:not(.has-entered) .gallery-panel-bg img {
+  transform: scale(1.4) !important;
+}
+
+.gallery-panel-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 40%);
+}
+
+.gallery-panel-content {
+  text-align: center;
+  z-index: 2;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  will-change: transform, opacity;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 1.5s ease 0.5s, transform 1.5s cubic-bezier(0.19, 1, 0.22, 1) 0.5s;
+}
+
+.horizontal-gallery-wrapper:not(.has-entered) .gallery-panel-content {
+  opacity: 0;
+  transform: translateY(60px) !important;
+}
+
+.gallery-panel-content h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+  letter-spacing: 0.3em;
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+}
+
+.gallery-panel-content h2 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(3rem, 8vw, 6rem);
+  letter-spacing: 0.1em;
+  font-weight: 300;
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+}
+
+.panel-indicator {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.5);
+  margin-top: 3rem;
+}
+
+.gallery-footer-wrapper {
+  position: relative;
+  z-index: 100;
+  background: #000;
 }

@@ -9,7 +9,7 @@ const packagesData = [
     location: 'VARIOUS LOCATIONS',
     duration: '2 DAYS / 1 NIGHT',
     description: 'Immerse yourself in the tranquility of nature with our bespoke camping experiences. Enjoy starry nights and warm bonfires.',
-    image: '/pkg_camps.jpg'
+    image: '/new_camps.jpg'
   },
   {
     id: 2,
@@ -18,7 +18,7 @@ const packagesData = [
     location: 'TROPICAL FORESTS',
     duration: '4 DAYS / 3 NIGHTS',
     description: 'Discover hidden gems and breathtaking landscapes with our guided tours through lush environments.',
-    image: '/user_image2.jpg'
+    image: '/new_tours.png'
   },
   {
     id: 3,
@@ -27,7 +27,7 @@ const packagesData = [
     location: 'MOUNTAIN PEAKS',
     duration: '5 DAYS / 4 NIGHTS',
     description: 'Challenge yourself and reach new heights. Our curated trekking routes take you through dramatic mountain peaks.',
-    image: '/user_image3.jpg'
+    image: '/new_treks.jpg'
   },
   {
     id: 4,
@@ -36,7 +36,7 @@ const packagesData = [
     location: 'SCENIC RIDGES',
     duration: '3 DAYS / 2 NIGHTS',
     description: 'Share the adventure. Our group trips are designed to foster connection and create lifelong memories.',
-    image: '/user_image4.jpg'
+    image: '/new_group.jpg'
   },
   {
     id: 5,
@@ -45,7 +45,7 @@ const packagesData = [
     location: 'WORLDWIDE',
     duration: 'FLEXIBLE',
     description: 'Your dream journey, tailored perfectly to you. Let us craft a bespoke itinerary that matches your unique pace.',
-    image: '/user_image1.png'
+    image: '/new_custom.jpg'
   }
 ]
 

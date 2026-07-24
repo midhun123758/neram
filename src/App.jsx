@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import FogOverlay from './components/FogOverlay'
 import PackagesPage from './PackagesPage'
 import ContactPage from './ContactPage'
+import ImagesPage from './ImagesPage'
 import Footer from './Footer'
 import Sidebar from './Sidebar'
 import './index.css'
@@ -73,6 +74,7 @@ function App() {
     let previousRenderedY = -1
     let rafId     = null
     let touchStartY = 0
+    let lastWheelTime = 0
     let logoTargetX = 0
     let logoTargetY = 0
     let windowWidth = window.innerWidth
@@ -121,6 +123,7 @@ function App() {
     const onWheel = (e) => {
       if (pageRef.current !== 'home') return
       e.preventDefault()
+      lastWheelTime = Date.now()
       // Normalize across trackpads (small deltaY) and mice (large deltaY)
       const delta = Math.abs(e.deltaY) > 50
         ? e.deltaY * 0.9   // mouse wheel — faster and more responsive
@@ -137,6 +140,7 @@ function App() {
     const onTouchMove = (e) => {
       if (pageRef.current !== 'home') return
       e.preventDefault()
+      lastWheelTime = Date.now()
       const dy = touchStartY - e.touches[0].clientY
       targetY += dy * 2.8 // Increased multiplier for much faster mobile scrolling
       touchStartY = e.touches[0].clientY
@@ -150,10 +154,47 @@ function App() {
         return
       }
 
+      // ── Magnetic Snapping ─────────────────────────────────────────────────
+      const now = Date.now()
+      if (now - lastWheelTime > 150) {
+        // User is idle. Let's find the closest snap point.
+        let closestSnapPoint = targetY
+        let minDistance = Infinity
+
+        // Snap points
+        const snapPoints = [0, windowHeight]
+        
+        if (contentRef.current) {
+          const sections = contentRef.current.children
+          for (let i = 0; i < sections.length; i++) {
+            const section = sections[i]
+            // We ignore tiny divs, only care about main sections
+            if (section.clientHeight > 100) {
+               snapPoints.push(windowHeight + section.offsetTop)
+            }
+          }
+        }
+
+        for (const point of snapPoints) {
+          const distance = Math.abs(targetY - point)
+          // Magnet threshold (e.g. 25% of viewport height)
+          if (distance < windowHeight * 0.25 && distance < minDistance) {
+            minDistance = distance
+            closestSnapPoint = point
+          }
+        }
+
+        // Softly pull targetY to the snap point
+        if (closestSnapPoint !== targetY) {
+          targetY = lerp(targetY, closestSnapPoint, 0.06)
+          clampTarget()
+        }
+      }
+
       const diff = targetY - currentY
 
       // Snap when close enough to avoid infinite tiny updates
-      if (Math.abs(diff) < 0.1) {
+      if (Math.abs(diff) < 0.2) {
         currentY = targetY
       } else {
         // High lerp for snappier mobile feel, smooth lerp for desktop
@@ -162,7 +203,7 @@ function App() {
       }
 
       // ── Optimization: Skip heavy DOM updates if no scroll change
-      if (Math.abs(currentY - previousRenderedY) < 0.05) {
+      if (Math.abs(currentY - previousRenderedY) < 0.1) {
         rafId = requestAnimationFrame(tick)
         return
       }
@@ -302,6 +343,10 @@ function App() {
 
   if (currentPage === 'contact') {
     return <ContactPage navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />;
+  }
+
+  if (currentPage === 'images') {
+    return <ImagesPage navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />;
   }
 
   return (

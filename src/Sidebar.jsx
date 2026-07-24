@@ -10,6 +10,7 @@ export default function Sidebar({ isMenuOpen, setIsMenuOpen, navigateTo }) {
         <div className="sidebar-links">
           <span className="sidebar-link" onClick={() => { setIsMenuOpen(false); navigateTo('home'); }}>Home</span>
           <span className="sidebar-link" onClick={() => { setIsMenuOpen(false); navigateTo('packages'); }}>Packages</span>
+          <span className="sidebar-link" onClick={() => { setIsMenuOpen(false); navigateTo('images'); }}>Images</span>
           <span className="sidebar-link" onClick={() => { setIsMenuOpen(false); navigateTo('contact'); }}>Contact</span>
         </div>
       </div>
