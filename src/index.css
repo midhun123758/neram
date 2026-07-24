@@ -1196,7 +1196,7 @@ body {
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .footer-section {
   width: 100%;
-  background-color: #050806; /* Black */
+  background-color: #030a05; /* Almost black but slightly green */
   padding: 6rem 10vw;
   color: #fff;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
