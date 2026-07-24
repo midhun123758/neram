@@ -479,7 +479,7 @@ function App() {
           </div>
           <div className="collage-inner">
             <h2 className="vertical-text">HEALING</h2>
-            <div className="collage-content">
+            <div className="collage-content reveal-on-scroll">
               <p className="collage-subtitle">NATURE · TRAVEL · HEALING</p>
               <h2>
                 Every Journey<br/>
