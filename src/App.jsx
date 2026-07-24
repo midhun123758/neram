@@ -97,9 +97,10 @@ function App() {
         
         if (appRef.current && contentRef.current) {
           const vh = windowHeight
-          const phase1_5End = vh * 0.8 // Faster NERAM logo reveal
+          const phase1_5End = vh * 0.8 // NERAM logo fully revealed
+          const slideUpStart = vh * 1.2 // Added pause so user can see logo
           const contentH = contentRef.current.scrollHeight
-          appRef.current.style.height = `${phase1_5End + vh + contentH}px`
+          appRef.current.style.height = `${slideUpStart + vh + contentH}px`
           
           // Calculate exact destination for the flying logo
           if (navLogoRef.current) {
@@ -148,15 +149,15 @@ function App() {
       const phase1_5End = vh * 0.8
       const phase1_5 = Math.min(Math.max((currentY - phase1End) / (phase1_5End - phase1End), 0), 1)
 
-      // ── Phase 2 (starts after 0.8*vh): scroll dark sections up ──────────
-      // Once phase 1.5 is done, the dark content slides up naturally
-      // pixel-for-pixel with the scroll.
+      // ── Phase 2 (starts after 1.2*vh): scroll dark sections up ──────────
+      // This creates a cinematic pause (0.8vh to 1.2vh) where the logo stays in the center
+      const slideUpStart = vh * 1.2
       let contentScroll = 0
       let imageOpacity = 1
 
       if (contentRef.current) {
-        if (currentY > phase1_5End) {
-          contentScroll = Math.max(0, currentY - phase1_5End)
+        if (currentY > slideUpStart) {
+          contentScroll = Math.max(0, currentY - slideUpStart)
           
           // Fade the background as the second section slides up
           const fadeProgress = Math.min(1, contentScroll / vh)
@@ -201,12 +202,19 @@ function App() {
       }
 
       if (logoRef.current) {
+        // Hide completely if we haven't reached the reveal phase to prevent artifacts
+        if (phase1_5 === 0) {
+            logoRef.current.style.opacity = 0
+        } else {
+            logoRef.current.style.opacity = 1
+        }
+        
         // Use high-performance clip-path instead of expensive CSS mask gradients
         const insetRight = 100 - (phase1_5 * 100)
         logoRef.current.style.clipPath = `inset(0 ${insetRight}% 0 0)`
+        logoRef.current.style.WebkitClipPath = `inset(0 ${insetRight}% 0 0)` // For Safari/iOS support
         
-        // During the first 100vh (phase2), logo moves to the top left (navbar position).
-        // Calculate exact movement from center of screen to the navbar logo center
+        // During Phase 2, logo moves to the top left (navbar position).
         const maxMoveX = logoTargetX - (vw / 2)
         const maxMoveY = logoTargetY - (vh / 2)
         
@@ -214,9 +222,7 @@ function App() {
         const moveY = logoPhase * maxMoveY
         const scale = 1 - (logoPhase * 0.8) // shrink to fit navbar
         
-        // Let the image logo stay fully visible as it glides into the navbar position
         logoRef.current.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px)) scale(${scale})`
-        logoRef.current.style.opacity = 1
       }
 
       rafId = requestAnimationFrame(tick)
