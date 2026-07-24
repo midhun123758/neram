@@ -111,37 +111,7 @@ function App() {
     setTimeout(updateHeight, 100)
     window.addEventListener('resize', updateHeight)
 
-    // ── Scroll target clamping ───────────────────────────────────────────────
-    const clampTarget = () => {
-      const maxScroll = document.documentElement.scrollHeight - windowHeight
-      targetY = Math.max(0, Math.min(targetY, maxScroll))
-    }
-
-    // ── Mouse wheel ──────────────────────────────────────────────────────────
-    const onWheel = (e) => {
-      if (pageRef.current !== 'home') return
-      e.preventDefault()
-      // Normalize across trackpads (small deltaY) and mice (large deltaY)
-      const delta = Math.abs(e.deltaY) > 50
-        ? e.deltaY * 0.9   // mouse wheel — faster and more responsive
-        : e.deltaY * 1.6   // trackpad
-      targetY += delta
-      clampTarget()
-    }
-
-    // ── Touch support ────────────────────────────────────────────────────────
-    const onTouchStart = (e) => {
-      if (pageRef.current !== 'home') return
-      touchStartY = e.touches[0].clientY
-    }
-    const onTouchMove = (e) => {
-      if (pageRef.current !== 'home') return
-      e.preventDefault()
-      const dy = touchStartY - e.touches[0].clientY
-      targetY += dy * 2.8 // Increased multiplier for much faster mobile scrolling
-      touchStartY = e.touches[0].clientY
-      clampTarget()
-    }
+    // Removed custom scroll hijackers. We now rely entirely on native browser scrolling.
 
     // ── rAF loop ─────────────────────────────────────────────────────────────
     const tick = () => {
@@ -150,25 +120,15 @@ function App() {
         return
       }
 
-      const diff = targetY - currentY
+      // Pure native scroll reading - perfectly smooth and matches packages page
+      const currentY = window.scrollY
 
-      // Snap when close enough to avoid infinite tiny updates
-      if (Math.abs(diff) < 0.1) {
-        currentY = targetY
-      } else {
-        // High lerp for snappier mobile feel, smooth lerp for desktop
-        const lerpFactor = windowWidth <= 768 ? 0.12 : 0.05
-        currentY = lerp(currentY, targetY, lerpFactor) 
-      }
-
-      // ── Optimization: Skip heavy DOM updates if no scroll change
-      if (Math.abs(currentY - previousRenderedY) < 0.05) {
+      // ── Optimization: Skip heavy DOM updates if scroll barely changed
+      if (Math.abs(currentY - previousRenderedY) < 0.5) {
         rafId = requestAnimationFrame(tick)
         return
       }
       previousRenderedY = currentY
-
-      window.scrollTo(0, Math.round(currentY))
 
       const vw = windowWidth
       const vh = windowHeight
@@ -260,11 +220,6 @@ function App() {
       rafId = requestAnimationFrame(tick)
     }
 
-    // ── Register events ──────────────────────────────────────────────────────
-    window.addEventListener('wheel',      onWheel,      { passive: false })
-    window.addEventListener('touchstart', onTouchStart, { passive: false })
-    window.addEventListener('touchmove',  onTouchMove,  { passive: false })
-    
     // Recalculate height once fonts/images load
     window.addEventListener('load', updateHeight)
     
@@ -288,9 +243,6 @@ function App() {
     return () => {
       window.removeEventListener('resize',     updateHeight)
       window.removeEventListener('load',       updateHeight)
-      window.removeEventListener('wheel',      onWheel)
-      window.removeEventListener('touchstart', onTouchStart)
-      window.removeEventListener('touchmove',  onTouchMove)
       cancelAnimationFrame(rafId)
       observer.disconnect()
     }

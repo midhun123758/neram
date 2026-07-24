@@ -10,6 +10,8 @@ html {
   /* Let html grow with content so body.scrollHeight is correct */
   min-height: 100%;
   overflow-x: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* Buttery momentum scrolling on iOS */
 }
 
 body {
@@ -20,6 +22,7 @@ body {
   color: #fff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  touch-action: manipulation; /* Removes 300ms tap delay and improves touch responsiveness */
 }
 
 /* ── Preloader ───────────────────────────────────────────────────────────── */
