@@ -10,7 +10,7 @@ html {
   /* Let html grow with content so body.scrollHeight is correct */
   min-height: 100%;
   overflow-x: hidden;
-  scroll-behavior: smooth;
+  /* Lenis handles smooth scrolling — no need for CSS scroll-behavior */
   -webkit-overflow-scrolling: touch; /* Buttery momentum scrolling on iOS */
 }
 

@@ -6,6 +6,8 @@ import ContactPage from './ContactPage'
 import Footer from './Footer'
 import Sidebar from './Sidebar'
 import './index.css'
+import 'lenis/dist/lenis.css'
+import Lenis from 'lenis'
 import Player from '@vimeo/player'
 
 function App() {
@@ -68,17 +70,23 @@ function App() {
   }, [isVideoOpen])
 
   useEffect(() => {
-    let currentY  = 0
-    let targetY   = 0
     let previousRenderedY = -1
     let rafId     = null
-    let touchStartY = 0
     let logoTargetX = 0
     let logoTargetY = 0
     let windowWidth = window.innerWidth
     let windowHeight = window.innerHeight
 
-    const lerp = (a, b, t) => a + (b - a) * t
+    // ── Lenis smooth scroll (same library as izanami-official.com) ───────
+    const lenis = new Lenis({
+      autoRaf: true,           // Let Lenis manage its own rAF loop
+      duration: 1.2,           // Glide duration — matches Izanami's feel
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Expo ease-out
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      touchMultiplier: 2,
+    })
 
       // ── Update container height dynamically ──────────────────────────────────
       const updateHeight = () => {
@@ -89,10 +97,8 @@ function App() {
         
         if (appRef.current && contentRef.current) {
           const vh = windowHeight
-          const phase1_5End = vh * 1.0 // phases before dark content appears (faster)
+          const phase1_5End = vh * 0.8 // Faster NERAM logo reveal
           const contentH = contentRef.current.scrollHeight
-          // We add vh to contentH because the dark section starts fully off-screen (at 100vh)
-          // and needs 1 full vh of scrolling just to slide in to position.
           appRef.current.style.height = `${phase1_5End + vh + contentH}px`
           
           // Calculate exact destination for the flying logo
@@ -111,8 +117,6 @@ function App() {
     setTimeout(updateHeight, 100)
     window.addEventListener('resize', updateHeight)
 
-    // Removed custom scroll hijackers. We now rely entirely on native browser scrolling.
-
     // ── rAF loop ─────────────────────────────────────────────────────────────
     const tick = () => {
       if (pageRef.current !== 'home') {
@@ -120,7 +124,7 @@ function App() {
         return
       }
 
-      // Pure native scroll reading - perfectly smooth and matches packages page
+      // Pure native scroll reading
       const currentY = window.scrollY
 
       // ── Optimization: Skip heavy DOM updates if scroll barely changed
@@ -133,21 +137,20 @@ function App() {
       const vw = windowWidth
       const vh = windowHeight
 
-      // ── Phase 1 (0 → 0.6*vh): pan image top → bottom ────────────────────
-      const phase1End = vh * 0.6
+      // ── Phase 1 (0 → 0.4*vh): pan image top → bottom (faster) ────────────
+      const phase1End = vh * 0.4
       const phase1 = Math.min(Math.max(currentY / phase1End, 0), 1)
       if (imgRef.current) {
-        // Use GPU-accelerated transform instead of expensive objectPosition paint
         imgRef.current.style.transform = `translateY(-${phase1 * 15}vh)`
       }
 
-      // ── Phase 1.5 (0.6*vh → 1.0*vh): smooth logo writing reveal ─────────
-      const phase1_5End = vh * 1.0
+      // ── Phase 1.5 (0.4*vh → 0.8*vh): smooth logo writing reveal (faster) ──
+      const phase1_5End = vh * 0.8
       const phase1_5 = Math.min(Math.max((currentY - phase1End) / (phase1_5End - phase1End), 0), 1)
 
-      // ── Phase 2 (starts after 1.0*vh): scroll dark sections up ──────────
+      // ── Phase 2 (starts after 0.8*vh): scroll dark sections up ──────────
       // Once phase 1.5 is done, the dark content slides up naturally
-      // pixel-for-pixel with the scroll wheel.
+      // pixel-for-pixel with the scroll.
       let contentScroll = 0
       let imageOpacity = 1
 
@@ -155,9 +158,8 @@ function App() {
         if (currentY > phase1_5End) {
           contentScroll = Math.max(0, currentY - phase1_5End)
           
-          // As the second section slides up (contentScroll goes from 0 to 100vh),
-          // fade the background image to black (opacity 1 to 0)
-          const fadeProgress = Math.min(1, contentScroll / window.innerHeight)
+          // Fade the background as the second section slides up
+          const fadeProgress = Math.min(1, contentScroll / vh)
           imageOpacity = 1 - fadeProgress
         }
         
@@ -241,6 +243,7 @@ function App() {
     revealElements.forEach((el) => observer.observe(el))
 
     return () => {
+      lenis.destroy()
       window.removeEventListener('resize',     updateHeight)
       window.removeEventListener('load',       updateHeight)
       cancelAnimationFrame(rafId)
@@ -331,32 +334,33 @@ function App() {
         {/* Phase 2: Philosophy Section */}
         <div className="philosophy-section">
           
-          {/* Background Video */}
+          {/* Background Video - lazy loaded */}
           <div className="section-video-bg reveal-on-scroll">
-            <img src="/nature4.jpg" alt="Fallback Background" className="video-fallback-bg" />
+            <img src="/nature4.jpg" alt="Fallback Background" className="video-fallback-bg" loading="lazy" />
             <iframe 
               title="vimeo-bg" 
               src="https://player.vimeo.com/video/156891323?h=078885103c&background=1#t=2s" 
               width="100%" 
               height="100%" 
               frameBorder="0" 
-              allow="autoplay; fullscreen; picture-in-picture"   
+              allow="autoplay; fullscreen; picture-in-picture"
+              loading="lazy"
             ></iframe>
           </div>
 
           {/* Decorative Images */}
           <div className="deco-gallery">
             <div className="deco-item img-1 reveal-on-scroll">
-              <img src="/nature4.jpg" alt="Landscape" />
+              <img src="/nature4.jpg" alt="Landscape" loading="lazy" />
             </div>
             <div className="deco-item img-2 reveal-on-scroll">
-              <img src="/nature5.jpg" alt="Waterfall" />
+              <img src="/nature5.jpg" alt="Waterfall" loading="lazy" />
             </div>
             <div className="deco-item img-3 reveal-on-scroll">
-              <img src="/nature3.jpg" alt="Nature" />
+              <img src="/nature3.jpg" alt="Nature" loading="lazy" />
             </div>
             <div className="deco-item img-4 reveal-on-scroll">
-              <img src="/nature6.jpg" alt="Mountains" />
+              <img src="/nature6.jpg" alt="Mountains" loading="lazy" />
             </div>
           </div>
 
