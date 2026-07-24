@@ -79,6 +79,8 @@ function App() {
     let logoTargetY = 0
     let windowWidth = window.innerWidth
     let windowHeight = window.innerHeight
+    let cachedMaxScroll = 0
+    let cachedSnapPoints = []
 
     const lerp = (a, b, t) => a + (b - a) * t
 
@@ -106,6 +108,17 @@ function App() {
           
           // Force a re-render next tick if layout changes
           previousRenderedY = -1
+          
+          cachedMaxScroll = (phase1_5End + vh + contentH) - windowHeight
+          
+          cachedSnapPoints = [0, windowHeight]
+          const sections = contentRef.current.children
+          for (let i = 0; i < sections.length; i++) {
+            const section = sections[i]
+            if (section.clientHeight > 100) {
+               cachedSnapPoints.push(windowHeight + section.offsetTop)
+            }
+          }
         }
       }
 
@@ -115,8 +128,7 @@ function App() {
 
     // ── Scroll target clamping ───────────────────────────────────────────────
     const clampTarget = () => {
-      const maxScroll = document.documentElement.scrollHeight - windowHeight
-      targetY = Math.max(0, Math.min(targetY, maxScroll))
+      targetY = Math.max(0, Math.min(targetY, cachedMaxScroll))
     }
 
     // ── Mouse wheel ──────────────────────────────────────────────────────────
@@ -161,21 +173,8 @@ function App() {
         let closestSnapPoint = targetY
         let minDistance = Infinity
 
-        // Snap points
-        const snapPoints = [0, windowHeight]
-        
-        if (contentRef.current) {
-          const sections = contentRef.current.children
-          for (let i = 0; i < sections.length; i++) {
-            const section = sections[i]
-            // We ignore tiny divs, only care about main sections
-            if (section.clientHeight > 100) {
-               snapPoints.push(windowHeight + section.offsetTop)
-            }
-          }
-        }
-
-        for (const point of snapPoints) {
+        // Snap points are pre-calculated to avoid layout thrashing
+        for (const point of cachedSnapPoints) {
           const distance = Math.abs(targetY - point)
           // Magnet threshold (e.g. 25% of viewport height)
           if (distance < windowHeight * 0.25 && distance < minDistance) {
@@ -277,6 +276,11 @@ function App() {
         // Fade out in the first 20vh of scrolling
         const scrollOpacity = Math.max(0, 1 - (currentY / (vh * 0.2)))
         scrollIndicatorRef.current.style.opacity = scrollOpacity
+      }
+
+      // ── Vimeo Scroll Parallax/Zoom ──────────────────────────────────────────
+      if (iframeRef.current) {
+        iframeRef.current.style.transform = `translate(-50%, -50%)`
       }
 
       if (logoRef.current) {

@@ -3,33 +3,23 @@ import React, { useEffect, useRef, useState } from 'react';
 const galleryImages = [
   {
     id: 1,
-    url: '/nature1.jpg',
-    title: 'THE WILD',
-    subtitle: 'INTO THE UNKNOWN'
+    url: '/user_image1.png',
+    title: 'DISCOVER'
   },
   {
     id: 2,
-    url: '/nature2.jpg',
-    title: 'SERENITY',
-    subtitle: 'FIND YOUR PEACE'
+    url: '/user_image2.jpg',
+    title: 'WANDER'
   },
   {
     id: 3,
-    url: '/nature3.jpg',
-    title: 'ELEVATION',
-    subtitle: 'REACH THE PEAK'
+    url: '/user_image3.jpg',
+    title: 'JOURNEY'
   },
   {
     id: 4,
-    url: '/nature4.jpg',
-    title: 'AWAKENING',
-    subtitle: 'BREATHE THE WILD AIR'
-  },
-  {
-    id: 5,
-    url: '/nature5.jpg',
-    title: 'HORIZON',
-    subtitle: 'ENDLESS POSSIBILITIES'
+    url: '/user_image4.jpg',
+    title: 'ESCAPE'
   }
 ];
 
@@ -41,6 +31,7 @@ export default function ImagesPage({ navigateTo }) {
   // For smooth lerping
   const currentX = useRef(0);
   const targetX = useRef(0);
+  const panelsCache = useRef([]);
   
   const [hasEntered, setHasEntered] = useState(false);
 
@@ -54,46 +45,36 @@ export default function ImagesPage({ navigateTo }) {
 
     const handleScroll = () => {
       if (!containerRef.current) return;
-      // Calculate how far we've scrolled down the container
       const containerTop = containerRef.current.offsetTop;
       const scrollY = window.scrollY - containerTop;
       const maxScroll = containerRef.current.offsetHeight - window.innerHeight;
       
-      // Calculate percentage (0 to 1)
       let progress = scrollY / maxScroll;
       progress = Math.max(0, Math.min(progress, 1));
       
-      // Max translate X is (Total panels - 1) * 100vw
       const maxTranslate = (galleryImages.length - 1) * window.innerWidth;
       targetX.current = progress * -maxTranslate;
     };
 
     const animate = () => {
-      // Lerp (smooth follow)
       currentX.current += (targetX.current - currentX.current) * 0.08;
       
       if (trackRef.current) {
         trackRef.current.style.transform = `translateX(${currentX.current}px)`;
         
-        // Advanced Parallax: Adjust images inside the track based on position
-        const panels = trackRef.current.querySelectorAll('.gallery-panel');
-        panels.forEach((panel, index) => {
-          const panelLeft = index * window.innerWidth;
-          // Distance from screen center
+        // Use cached DOM nodes to avoid 60fps querySelectorAll lag on mobile
+        const w = window.innerWidth;
+        panelsCache.current.forEach((panelObj, index) => {
+          const panelLeft = index * w;
           const distFromCenter = panelLeft + currentX.current;
-          const normalizedDist = distFromCenter / window.innerWidth;
+          const normalizedDist = distFromCenter / w;
           
-          const bg = panel.querySelector('.gallery-panel-bg img');
-          const content = panel.querySelector('.gallery-panel-content');
-          
-          if (bg) {
-            // Parallax the image inside the panel slightly opposite to scroll
-            bg.style.transform = `translateX(${normalizedDist * 15}vw) scale(${1 + Math.abs(normalizedDist) * 0.15})`;
+          if (panelObj.bg) {
+            panelObj.bg.style.transform = `translateX(${normalizedDist * 15}vw) scale(${1 + Math.abs(normalizedDist) * 0.15})`;
           }
-          if (content) {
-            // Fade and move content based on how far from center
-            content.style.opacity = 1 - Math.abs(normalizedDist) * 1.5;
-            content.style.transform = `translateY(${Math.abs(normalizedDist) * 50}px)`;
+          if (panelObj.content) {
+            panelObj.content.style.opacity = 1 - Math.abs(normalizedDist) * 1.5;
+            panelObj.content.style.transform = `translateY(${Math.abs(normalizedDist) * 50}px)`;
           }
         });
       }
@@ -101,10 +82,18 @@ export default function ImagesPage({ navigateTo }) {
       rafId.current = requestAnimationFrame(animate);
     };
 
+    // Cache DOM nodes once
+    if (trackRef.current) {
+      const panels = trackRef.current.querySelectorAll('.gallery-panel');
+      panelsCache.current = Array.from(panels).map(panel => ({
+        bg: panel.querySelector('.gallery-panel-bg img'),
+        content: panel.querySelector('.gallery-panel-content')
+      }));
+    }
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleScroll);
     
-    // Start loop
     handleScroll();
     animate();
 
@@ -117,11 +106,6 @@ export default function ImagesPage({ navigateTo }) {
 
   return (
     <div className={`horizontal-gallery-wrapper ${hasEntered ? 'has-entered' : ''}`} ref={containerRef}>
-      {/* 
-        The wrapper has height = 500vh (number of images * 100vh).
-        This forces the browser to have a long vertical scrollbar. 
-      */}
-      
       <nav className="images-navbar">
         <div className="nav-logo" onClick={() => navigateTo('home')} style={{ cursor: 'pointer' }}>
           NERAM
@@ -132,7 +116,6 @@ export default function ImagesPage({ navigateTo }) {
       </nav>
 
       <div className="horizontal-sticky-container">
-        {/* This container sticks to the screen while we scroll down the wrapper */}
         <div className="horizontal-track" ref={trackRef}>
           {galleryImages.map((img, index) => (
             <div key={img.id} className="gallery-panel">
@@ -141,7 +124,6 @@ export default function ImagesPage({ navigateTo }) {
                 <div className="gallery-panel-overlay"></div>
               </div>
               <div className="gallery-panel-content">
-                <h3>{img.subtitle}</h3>
                 <h2>{img.title}</h2>
                 <div className="panel-indicator">
                   {String(index + 1).padStart(2, '0')} &mdash; {String(galleryImages.length).padStart(2, '0')}
