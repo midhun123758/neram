@@ -10,6 +10,7 @@ import Player from '@vimeo/player'
 
 function App() {
   const appRef     = useRef(null)
+  const heroBgRef  = useRef(null)
   const imgRef     = useRef(null)
   const contentRef = useRef(null)
   const logoRef    = useRef(null)
@@ -18,6 +19,7 @@ function App() {
   const iframeRef = useRef(null)
 
   const [isVideoOpen, setIsVideoOpen] = useState(false)
+  const [isRain, setIsRain] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isPackagesOpen, setIsPackagesOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -73,15 +75,21 @@ function App() {
     let touchStartY = 0
     let logoTargetX = 0
     let logoTargetY = 0
+    let windowWidth = window.innerWidth
+    let windowHeight = window.innerHeight
 
     const lerp = (a, b, t) => a + (b - a) * t
 
       // ── Update container height dynamically ──────────────────────────────────
       const updateHeight = () => {
         if (pageRef.current !== 'home') return
+        
+        windowWidth = window.innerWidth
+        windowHeight = window.innerHeight
+        
         if (appRef.current && contentRef.current) {
-          const vh = window.innerHeight
-          const phase1_5End = vh * 1.5 // phases before dark content appears
+          const vh = windowHeight
+          const phase1_5End = vh * 1.0 // phases before dark content appears (faster)
           const contentH = contentRef.current.scrollHeight
           // We add vh to contentH because the dark section starts fully off-screen (at 100vh)
           // and needs 1 full vh of scrolling just to slide in to position.
@@ -105,7 +113,7 @@ function App() {
 
     // ── Scroll target clamping ───────────────────────────────────────────────
     const clampTarget = () => {
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+      const maxScroll = document.documentElement.scrollHeight - windowHeight
       targetY = Math.max(0, Math.min(targetY, maxScroll))
     }
 
@@ -115,8 +123,8 @@ function App() {
       e.preventDefault()
       // Normalize across trackpads (small deltaY) and mice (large deltaY)
       const delta = Math.abs(e.deltaY) > 50
-        ? e.deltaY * 0.6   // mouse wheel — faster and more responsive
-        : e.deltaY * 1.2   // trackpad
+        ? e.deltaY * 0.9   // mouse wheel — faster and more responsive
+        : e.deltaY * 1.6   // trackpad
       targetY += delta
       clampTarget()
     }
@@ -130,7 +138,7 @@ function App() {
       if (pageRef.current !== 'home') return
       e.preventDefault()
       const dy = touchStartY - e.touches[0].clientY
-      targetY += dy * 1.5
+      targetY += dy * 2.8 // Increased multiplier for much faster mobile scrolling
       touchStartY = e.touches[0].clientY
       clampTarget()
     }
@@ -148,8 +156,9 @@ function App() {
       if (Math.abs(diff) < 0.1) {
         currentY = targetY
       } else {
-        // Higher lerp factor for snappier, less laggy feel
-        currentY = lerp(currentY, targetY, 0.085) 
+        // High lerp for snappier mobile feel, smooth lerp for desktop
+        const lerpFactor = windowWidth <= 768 ? 0.35 : 0.12
+        currentY = lerp(currentY, targetY, lerpFactor) 
       }
 
       // ── Optimization: Skip heavy DOM updates if no scroll change
@@ -161,22 +170,22 @@ function App() {
 
       window.scrollTo(0, Math.round(currentY))
 
-      const vw = window.innerWidth
-      const vh = window.innerHeight
+      const vw = windowWidth
+      const vh = windowHeight
 
-      // ── Phase 1 (0 → 1.0*vh): pan image top → bottom ────────────────────
-      const phase1End = vh * 1.0
+      // ── Phase 1 (0 → 0.6*vh): pan image top → bottom ────────────────────
+      const phase1End = vh * 0.6
       const phase1 = Math.min(Math.max(currentY / phase1End, 0), 1)
       if (imgRef.current) {
         // Use GPU-accelerated transform instead of expensive objectPosition paint
         imgRef.current.style.transform = `translateY(-${phase1 * 15}vh)`
       }
 
-      // ── Phase 1.5 (1.0*vh → 1.5*vh): smooth logo writing reveal ─────────
-      const phase1_5End = vh * 1.5
+      // ── Phase 1.5 (0.6*vh → 1.0*vh): smooth logo writing reveal ─────────
+      const phase1_5End = vh * 1.0
       const phase1_5 = Math.min(Math.max((currentY - phase1End) / (phase1_5End - phase1End), 0), 1)
 
-      // ── Phase 2 (starts after 1.5*vh): scroll dark sections up ──────────
+      // ── Phase 2 (starts after 1.0*vh): scroll dark sections up ──────────
       // Once phase 1.5 is done, the dark content slides up naturally
       // pixel-for-pixel with the scroll wheel.
       let contentScroll = 0
@@ -194,9 +203,11 @@ function App() {
         
         contentRef.current.style.transform = `translateY(calc(100vh - ${contentScroll}px))`
         
-        // Apply the calculated opacity to the image
-        if (imgRef.current) {
-            imgRef.current.style.opacity = imageOpacity
+        // Apply the calculated opacity to the hero background
+        if (heroBgRef.current) {
+            heroBgRef.current.style.opacity = imageOpacity
+            // Hide completely when faded out to save GPU resources (especially WebGL)
+            heroBgRef.current.style.visibility = imageOpacity <= 0.01 ? 'hidden' : 'visible'
         }
       }
 
@@ -212,12 +223,8 @@ function App() {
           // Disable CSS animation so inline opacity can take effect
           navLogoRef.current.style.animation = 'none'
           
-          if (logoPhase >= 0.8) {
-            // Fade out smoothly in the final 20%
-            navLogoRef.current.style.opacity = Math.max(0, 1 - (logoPhase - 0.8) * 5)
-          } else {
-            navLogoRef.current.style.opacity = 1
-          }
+          // Fade out the navbar text logo as the image logo comes to take its place
+          navLogoRef.current.style.opacity = Math.max(0, 1 - (logoPhase * 2))
         } else {
           // Allow initial CSS animation to run when at the top
           navLogoRef.current.style.animation = ''
@@ -232,8 +239,9 @@ function App() {
       }
 
       if (logoRef.current) {
-        // -20% to 100% to ensure the mask fully clears the width
-        logoRef.current.style.setProperty('--reveal', `${(phase1_5 * 120) - 20}%`)
+        // Use high-performance clip-path instead of expensive CSS mask gradients
+        const insetRight = 100 - (phase1_5 * 100)
+        logoRef.current.style.clipPath = `inset(0 ${insetRight}% 0 0)`
         
         // During the first 100vh (phase2), logo moves to the top left (navbar position).
         // Calculate exact movement from center of screen to the navbar logo center
@@ -244,7 +252,9 @@ function App() {
         const moveY = logoPhase * maxMoveY
         const scale = 1 - (logoPhase * 0.8) // shrink to fit navbar
         
+        // Let the image logo stay fully visible as it glides into the navbar position
         logoRef.current.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px)) scale(${scale})`
+        logoRef.current.style.opacity = 1
       }
 
       rafId = requestAnimationFrame(tick)
@@ -305,34 +315,36 @@ function App() {
 
       <div className="ui-container" ref={appRef}>
 
-      {/* Layer 0 — fixed background image */}
-      <div className="image-container">
-        <img
-          ref={imgRef}
-          src="/waterfall.jpeg"
-          alt="Background"
-          fetchPriority="high"
-          decoding="sync"
-        />
-      </div>
+      <div ref={heroBgRef} className="hero-bg-wrapper">
+        {/* Layer 0 — fixed background image */}
+        <div className="image-container">
+          <img
+            ref={imgRef}
+            src="/waterfall.jpeg"
+            alt="Background"
+            fetchPriority="high"
+            decoding="sync"
+          />
+        </div>
 
-      {/* Layer 1 — fog WebGL canvas, limited DPR for performance */}
-      <div className="canvas-container">
-        <Canvas
-          dpr={1}
-          frameloop="always"
-          gl={{ antialias: false, powerPreference: 'high-performance', alpha: true }}
-        >
-          <Suspense fallback={null}>
-            <FogOverlay />
-          </Suspense>
-        </Canvas>
+        {/* Layer 1 — fog WebGL canvas, limited DPR for performance */}
+        <div className="canvas-container">
+          <Canvas
+            dpr={1}
+            frameloop="always"
+            gl={{ antialias: false, powerPreference: 'high-performance', alpha: true }}
+          >
+            <Suspense fallback={null}>
+              <FogOverlay isRain={isRain} />
+            </Suspense>
+          </Canvas>
+        </div>
       </div>
 
       {/* Layer 2 — fixed navbar */}
       <div className="ui-overlay">
         <nav className="navbar">
-          <div className="logo" ref={navLogoRef} onClick={() => setIsVideoOpen(true)}>NERAM</div>
+          <div className="logo" ref={navLogoRef} onClick={() => navigateTo('home')}>NERAM</div>
           <div className="nav-controls">
             <button className="menu-btn" onClick={() => setIsMenuOpen(true)}>
               <span className="menu-text">menu</span>
@@ -357,7 +369,7 @@ function App() {
         src="/logo.png" 
         alt="Neram Logo" 
         className="center-logo"
-        onClick={() => setIsVideoOpen(true)}
+        onClick={() => setIsRain(prev => !prev)}
         style={{ pointerEvents: 'auto', cursor: 'pointer' }}
       />
 
@@ -368,7 +380,8 @@ function App() {
         <div className="philosophy-section">
           
           {/* Background Video */}
-          <div className="section-video-bg">
+          <div className="section-video-bg reveal-on-scroll">
+            <img src="/nature4.jpg" alt="Fallback Background" className="video-fallback-bg" />
             <iframe 
               title="vimeo-bg" 
               src="https://player.vimeo.com/video/156891323?h=078885103c&background=1#t=2s" 
@@ -398,12 +411,10 @@ function App() {
           <div className="philosophy-inner">
             <h2 className="vertical-text">PHILOSOPHY</h2>
             <div className="philosophy-content">
-              <h2>Nature is not a place to visit.<br/>It is home.</h2>
+              <h2>&ldquo;Nature is not a place to visit.<br/>It is home.&rdquo;</h2>
             </div>
           </div>
         </div>
-
-
 
         {/* Phase 3: Collage Section */}
         <div className="collage-section">
@@ -424,7 +435,7 @@ function App() {
               <h2>
                 Every Journey<br/>
                 Begins With<br/>
-                <span className="text-green" onClick={() => setIsVideoOpen(true)} style={{ cursor: 'pointer' }}>NERAM</span>
+                <span className="text-green">NERAM</span>
               </h2>
               <p className="collage-description">
                 <strong>Neram.in</strong> — More than just a trip—it’s a reset button for your mind. Camping, trekking, and outdoor journeys made for real connection.
@@ -433,12 +444,33 @@ function App() {
                 Plan your next escape with us today.
               </p>
               
-              <button className="primary-explore-btn" onClick={() => navigateTo('packages')}>
-                <span>Explore Packages</span>
-                <div className="btn-arrow">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                </div>
-              </button>
+              <div className="horizontal-indicator-btn" onClick={() => navigateTo('packages')} style={{ alignSelf: 'flex-start', marginTop: '1rem' }}>
+                <span>PACKAGES</span>
+                <div className="horizontal-indicator-line"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Phase 4: Company Section (Who we are) */}
+        <div className="company-section">
+          <div className="company-bg">
+            <img src="/sp_home_company_img.webp" alt="Company Background" />
+          </div>
+          <div className="company-side-text reveal-on-scroll">COMPANY</div>
+          <div className="company-content reveal-on-scroll">
+            <h2>Who we are</h2>
+            <div className="company-text">
+              <p>
+                In a world that never stops moving, true stillness has become a rare luxury. We believe that the deepest form of healing is found simply by returning to our roots—breathing the wild air, feeling the earth beneath our feet, and embracing the quiet rhythm of the wilderness.
+              </p>
+              <p>
+                At Neram, we don't just guide journeys across untamed landscapes; we curate experiences where time slows down, genuine connections are forged, and your inner nature is finally free to unfold.
+              </p>
+            </div>
+            <div className="horizontal-indicator-btn" onClick={() => navigateTo('contact')}>
+              <span>CONTACT</span>
+              <div className="horizontal-indicator-line"></div>
             </div>
           </div>
         </div>

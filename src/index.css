@@ -75,6 +75,16 @@ body {
 }
 
 /* ── Background image — fixed, never scrolls ─────────────────────────────── */
+.hero-bg-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+}
+
 .image-container {
   position: fixed;
   top: 0;
@@ -128,10 +138,8 @@ body {
   max-width: 700px;
   z-index: 60;
   pointer-events: none;
-  /* Mask creates a soft left-to-right wipe based on --reveal custom property */
-  -webkit-mask-image: linear-gradient(to right, black var(--reveal, -20%), transparent calc(var(--reveal, -20%) + 15%));
-  mask-image: linear-gradient(to right, black var(--reveal, -20%), transparent calc(var(--reveal, -20%) + 15%));
-  will-change: mask-image, -webkit-mask-image;
+  /* Use clip-path (set via JS) for high-performance wipe animation */
+  will-change: transform, clip-path;
 }
 
 /* ── Scroll content — container for all dark sections ───────────────────────
@@ -148,7 +156,7 @@ body {
   display: flex;
   flex-direction: column;
   transform: translateY(100vh);
-  will-change: transform;
+  /* Removed will-change: transform; here because this container is massively tall and breaks mobile GPU texture limits, causing software fallback lag */
 }
 
 
@@ -174,8 +182,23 @@ body {
   height: 100%;
   z-index: 0;
   overflow: hidden;
-  opacity: 0.25; /* Keep it subtle so text and images are readable */
+  opacity: 0; /* Start fully black */
+  transition: opacity 2.5s cubic-bezier(0.22, 1, 0.36, 1); /* Smooth slow fade in */
   pointer-events: none;
+}
+
+.section-video-bg.reveal-active {
+  opacity: 0.35; /* Target opacity - decreased to make the text pop more */
+}
+
+.video-fallback-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
 }
 
 .section-video-bg iframe {
@@ -305,6 +328,201 @@ body {
   max-width: 560px;
 }
 
+/* ── Company Section ─────────────────────────────────────────────────────── */
+.company-section {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6rem 5vw;
+  background-color: #0d0d0d;
+  overflow: hidden;
+  text-align: center;
+}
+
+.company-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.company-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center bottom;
+  filter: brightness(0.7) contrast(1.1); /* Slightly brighter so the trees are actually visible on desktop */
+}
+
+.company-content {
+  position: relative;
+  z-index: 10;
+  max-width: 800px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3rem;
+}
+
+.company-content .company-logo,
+.company-content h2,
+.company-content .company-text p,
+.company-content .horizontal-indicator-btn {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 1.5s cubic-bezier(0.22, 1, 0.36, 1), transform 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.company-content.reveal-active .company-logo {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.1s;
+}
+
+.company-content.reveal-active h2 {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.3s;
+}
+
+.company-content.reveal-active .company-text p:nth-child(1) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.5s;
+}
+
+.company-content.reveal-active .company-text p:nth-child(2) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.7s;
+}
+
+.company-content.reveal-active .horizontal-indicator-btn {
+  opacity: 0.8;
+  transform: translateY(0);
+  transition-delay: 0.9s;
+}
+
+.company-content.reveal-active .horizontal-indicator-btn:hover {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.company-content h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 400;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.company-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.company-text p {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.01em;
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+.company-side-text {
+  position: absolute;
+  top: 15%;
+  left: 5vw;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.25em;
+  writing-mode: vertical-rl;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  z-index: 5;
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 1.5s cubic-bezier(0.22, 1, 0.36, 1), transform 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.company-side-text.reveal-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.4s;
+}
+
+.company-logo img {
+  width: 80px;
+  height: auto;
+  opacity: 0.95;
+  margin-bottom: -1rem;
+}
+
+.horizontal-indicator-btn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
+  cursor: pointer;
+  margin-top: 3rem;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+  width: fit-content;
+}
+
+.horizontal-indicator-btn:hover {
+  opacity: 1;
+}
+
+.horizontal-indicator-btn span {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.25em;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.horizontal-indicator-line {
+  width: 60px;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.horizontal-indicator-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background-color: #fff;
+  animation: scrollRight 2s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+}
+
+@keyframes scrollRight {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+@media (max-width: 768px) {
+  .company-bg img {
+    object-position: center bottom;
+    transform: scale(1.25);
+    transform-origin: center bottom;
+  }
+}
+
 /* ── Collage specific ────────────────────────────────────────────────────── */
 .collage-section {
   position: relative;
@@ -348,6 +566,7 @@ body {
   opacity: 0;
   transform: translateY(150px);
   transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
 }
 
 .slice-1 { background-position: 0% 50%; }
@@ -380,7 +599,7 @@ body {
 }
 
 .collage-subtitle {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Playfair Display', serif;
   font-size: 0.85rem;
   letter-spacing: 0.15em;
   color: rgba(255, 255, 255, 0.5);
@@ -402,7 +621,7 @@ body {
 }
 
 .collage-description {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Playfair Display', serif;
   font-size: 1.25rem; /* Noticeably larger */
   font-weight: 500;   /* Bolder */
   line-height: 1.8;
@@ -410,6 +629,12 @@ body {
   max-width: 550px;
   letter-spacing: 0.01em;
   text-align: justify; 
+}
+
+.marquee span {
+  display: inline-block;
+  animation: scrollMarquee 30s linear infinite;
+  will-change: transform;
 }
 
 .primary-explore-btn {
@@ -422,7 +647,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 50px;
   color: #fff;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Playfair Display', serif;
   font-size: 0.9rem;
   font-weight: 500;
   text-transform: uppercase;
@@ -1011,7 +1236,7 @@ body {
 
 /* ── Responsive Mobile Styles ────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .philosophy-section, .collage-section, .footer-section {
+  .philosophy-section, .collage-section, .footer-section, .company-section {
     padding: 4rem 5vw;
   }
   
@@ -1024,7 +1249,7 @@ body {
     max-width: 100%;
   }
   
-  .collage-section, .collage-inner, .philosophy-inner {
+  .collage-section, .collage-inner, .philosophy-inner, .company-section {
     flex-direction: column;
     gap: 2.5rem;
   }
@@ -1034,6 +1259,27 @@ body {
     transform: none;
     margin-top: 0;
     margin-bottom: -1rem;
+  }
+
+  .company-side-text {
+    position: relative;
+    top: auto;
+    left: auto;
+    writing-mode: horizontal-tb;
+    transform: none;
+    margin-bottom: 2rem;
+    text-align: center;
+    width: 100%;
+  }
+
+  .company-content {
+    gap: 2rem;
+  }
+
+  .company-text p {
+    font-size: 1rem;
+    line-height: 1.7;
+    text-align: center;
   }
   
   .collage-container {
@@ -1054,7 +1300,7 @@ body {
   }
 
   /* Typography improvements for mobile */
-  .collage-content h2 {
+  .collage-content h2, .company-content h2 {
     font-size: 2.2rem;
     line-height: 1.15;
   }
@@ -1066,10 +1312,9 @@ body {
     color: rgba(255, 255, 255, 0.8);
   }
 
-  .primary-explore-btn {
-    margin-top: 1rem;
-    width: 100%; /* Full width button on mobile */
-    justify-content: space-between;
+  .horizontal-indicator-btn {
+    margin-top: 2rem;
+    align-self: center !important; /* Center the buttons on mobile */
   }
   
   .scroll-indicator {
