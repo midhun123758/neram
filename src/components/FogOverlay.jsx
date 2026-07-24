@@ -39,11 +39,11 @@ const fragmentShader = `
     );
   }
 
-  // 3-octave fBm (optimized for mobile performance)
+  // 4-octave fBm (optimized from 6)
   float fbm(vec2 p) {
     float v = 0.0, a = 0.52;
     mat2 rot = mat2(0.8660, 0.5, -0.5, 0.8660); // 30° rotation
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
       v += a * vnoise(p);
       p  = rot * p * 2.05;
       a *= 0.49;

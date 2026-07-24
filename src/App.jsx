@@ -6,8 +6,6 @@ import ContactPage from './ContactPage'
 import Footer from './Footer'
 import Sidebar from './Sidebar'
 import './index.css'
-import 'lenis/dist/lenis.css'
-import Lenis from 'lenis'
 import Player from '@vimeo/player'
 
 function App() {
@@ -70,23 +68,17 @@ function App() {
   }, [isVideoOpen])
 
   useEffect(() => {
+    let currentY  = 0
+    let targetY   = 0
     let previousRenderedY = -1
     let rafId     = null
+    let touchStartY = 0
     let logoTargetX = 0
     let logoTargetY = 0
     let windowWidth = window.innerWidth
     let windowHeight = window.innerHeight
 
-    // ── Lenis smooth scroll (same library as izanami-official.com) ───────
-    const lenis = new Lenis({
-      autoRaf: true,           // Let Lenis manage its own rAF loop
-      duration: 1.2,           // Glide duration — matches Izanami's feel
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Expo ease-out
-      orientation: 'vertical',
-      gestureOrientation: 'vertical',
-      smoothWheel: true,
-      touchMultiplier: 2,
-    })
+    const lerp = (a, b, t) => a + (b - a) * t
 
       // ── Update container height dynamically ──────────────────────────────────
       const updateHeight = () => {
@@ -97,10 +89,11 @@ function App() {
         
         if (appRef.current && contentRef.current) {
           const vh = windowHeight
-          const phase1_5End = vh * 0.8 // NERAM logo fully revealed
-          const slideUpStart = vh * 1.2 // Added pause so user can see logo
+          const phase1_5End = vh * 1.0 // phases before dark content appears (faster)
           const contentH = contentRef.current.scrollHeight
-          appRef.current.style.height = `${slideUpStart + vh + contentH}px`
+          // We add vh to contentH because the dark section starts fully off-screen (at 100vh)
+          // and needs 1 full vh of scrolling just to slide in to position.
+          appRef.current.style.height = `${phase1_5End + vh + contentH}px`
           
           // Calculate exact destination for the flying logo
           if (navLogoRef.current) {
@@ -118,6 +111,38 @@ function App() {
     setTimeout(updateHeight, 100)
     window.addEventListener('resize', updateHeight)
 
+    // ── Scroll target clamping ───────────────────────────────────────────────
+    const clampTarget = () => {
+      const maxScroll = document.documentElement.scrollHeight - windowHeight
+      targetY = Math.max(0, Math.min(targetY, maxScroll))
+    }
+
+    // ── Mouse wheel ──────────────────────────────────────────────────────────
+    const onWheel = (e) => {
+      if (pageRef.current !== 'home') return
+      e.preventDefault()
+      // Normalize across trackpads (small deltaY) and mice (large deltaY)
+      const delta = Math.abs(e.deltaY) > 50
+        ? e.deltaY * 0.9   // mouse wheel — faster and more responsive
+        : e.deltaY * 1.6   // trackpad
+      targetY += delta
+      clampTarget()
+    }
+
+    // ── Touch support ────────────────────────────────────────────────────────
+    const onTouchStart = (e) => {
+      if (pageRef.current !== 'home') return
+      touchStartY = e.touches[0].clientY
+    }
+    const onTouchMove = (e) => {
+      if (pageRef.current !== 'home') return
+      e.preventDefault()
+      const dy = touchStartY - e.touches[0].clientY
+      targetY += dy * 2.8 // Increased multiplier for much faster mobile scrolling
+      touchStartY = e.touches[0].clientY
+      clampTarget()
+    }
+
     // ── rAF loop ─────────────────────────────────────────────────────────────
     const tick = () => {
       if (pageRef.current !== 'home') {
@@ -125,42 +150,54 @@ function App() {
         return
       }
 
-      // Pure native scroll reading
-      const currentY = window.scrollY
+      const diff = targetY - currentY
 
-      // ── Optimization: Skip heavy DOM updates if scroll barely changed
-      if (Math.abs(currentY - previousRenderedY) < 0.5) {
+      // Snap when close enough to avoid infinite tiny updates
+      if (Math.abs(diff) < 0.1) {
+        currentY = targetY
+      } else {
+        // High lerp for snappier mobile feel, smooth lerp for desktop
+        const lerpFactor = windowWidth <= 768 ? 0.35 : 0.12
+        currentY = lerp(currentY, targetY, lerpFactor) 
+      }
+
+      // ── Optimization: Skip heavy DOM updates if no scroll change
+      if (Math.abs(currentY - previousRenderedY) < 0.05) {
         rafId = requestAnimationFrame(tick)
         return
       }
       previousRenderedY = currentY
 
+      window.scrollTo(0, Math.round(currentY))
+
       const vw = windowWidth
       const vh = windowHeight
 
-      // ── Phase 1 (0 → 0.4*vh): pan image top → bottom (faster) ────────────
-      const phase1End = vh * 0.4
+      // ── Phase 1 (0 → 0.6*vh): pan image top → bottom ────────────────────
+      const phase1End = vh * 0.6
       const phase1 = Math.min(Math.max(currentY / phase1End, 0), 1)
       if (imgRef.current) {
+        // Use GPU-accelerated transform instead of expensive objectPosition paint
         imgRef.current.style.transform = `translateY(-${phase1 * 15}vh)`
       }
 
-      // ── Phase 1.5 (0.4*vh → 0.8*vh): smooth logo writing reveal (faster) ──
-      const phase1_5End = vh * 0.8
+      // ── Phase 1.5 (0.6*vh → 1.0*vh): smooth logo writing reveal ─────────
+      const phase1_5End = vh * 1.0
       const phase1_5 = Math.min(Math.max((currentY - phase1End) / (phase1_5End - phase1End), 0), 1)
 
-      // ── Phase 2 (starts after 1.2*vh): scroll dark sections up ──────────
-      // This creates a cinematic pause (0.8vh to 1.2vh) where the logo stays in the center
-      const slideUpStart = vh * 1.2
+      // ── Phase 2 (starts after 1.0*vh): scroll dark sections up ──────────
+      // Once phase 1.5 is done, the dark content slides up naturally
+      // pixel-for-pixel with the scroll wheel.
       let contentScroll = 0
       let imageOpacity = 1
 
       if (contentRef.current) {
-        if (currentY > slideUpStart) {
-          contentScroll = Math.max(0, currentY - slideUpStart)
+        if (currentY > phase1_5End) {
+          contentScroll = Math.max(0, currentY - phase1_5End)
           
-          // Fade the background as the second section slides up
-          const fadeProgress = Math.min(1, contentScroll / vh)
+          // As the second section slides up (contentScroll goes from 0 to 100vh),
+          // fade the background image to black (opacity 1 to 0)
+          const fadeProgress = Math.min(1, contentScroll / window.innerHeight)
           imageOpacity = 1 - fadeProgress
         }
         
@@ -202,19 +239,12 @@ function App() {
       }
 
       if (logoRef.current) {
-        // Hide completely if we haven't reached the reveal phase to prevent artifacts
-        if (phase1_5 === 0) {
-            logoRef.current.style.opacity = 0
-        } else {
-            logoRef.current.style.opacity = 1
-        }
-        
         // Use high-performance clip-path instead of expensive CSS mask gradients
         const insetRight = 100 - (phase1_5 * 100)
         logoRef.current.style.clipPath = `inset(0 ${insetRight}% 0 0)`
-        logoRef.current.style.WebkitClipPath = `inset(0 ${insetRight}% 0 0)` // For Safari/iOS support
         
-        // During Phase 2, logo moves to the top left (navbar position).
+        // During the first 100vh (phase2), logo moves to the top left (navbar position).
+        // Calculate exact movement from center of screen to the navbar logo center
         const maxMoveX = logoTargetX - (vw / 2)
         const maxMoveY = logoTargetY - (vh / 2)
         
@@ -222,12 +252,19 @@ function App() {
         const moveY = logoPhase * maxMoveY
         const scale = 1 - (logoPhase * 0.8) // shrink to fit navbar
         
+        // Let the image logo stay fully visible as it glides into the navbar position
         logoRef.current.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px)) scale(${scale})`
+        logoRef.current.style.opacity = 1
       }
 
       rafId = requestAnimationFrame(tick)
     }
 
+    // ── Register events ──────────────────────────────────────────────────────
+    window.addEventListener('wheel',      onWheel,      { passive: false })
+    window.addEventListener('touchstart', onTouchStart, { passive: false })
+    window.addEventListener('touchmove',  onTouchMove,  { passive: false })
+    
     // Recalculate height once fonts/images load
     window.addEventListener('load', updateHeight)
     
@@ -249,9 +286,11 @@ function App() {
     revealElements.forEach((el) => observer.observe(el))
 
     return () => {
-      lenis.destroy()
       window.removeEventListener('resize',     updateHeight)
       window.removeEventListener('load',       updateHeight)
+      window.removeEventListener('wheel',      onWheel)
+      window.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('touchmove',  onTouchMove)
       cancelAnimationFrame(rafId)
       observer.disconnect()
     }
@@ -340,33 +379,32 @@ function App() {
         {/* Phase 2: Philosophy Section */}
         <div className="philosophy-section">
           
-          {/* Background Video - lazy loaded */}
+          {/* Background Video */}
           <div className="section-video-bg reveal-on-scroll">
-            <img src="/nature4.jpg" alt="Fallback Background" className="video-fallback-bg" loading="lazy" />
+            <img src="/nature4.jpg" alt="Fallback Background" className="video-fallback-bg" />
             <iframe 
               title="vimeo-bg" 
               src="https://player.vimeo.com/video/156891323?h=078885103c&background=1#t=2s" 
               width="100%" 
               height="100%" 
               frameBorder="0" 
-              allow="autoplay; fullscreen; picture-in-picture"
-              loading="lazy"
+              allow="autoplay; fullscreen; picture-in-picture"   
             ></iframe>
           </div>
 
           {/* Decorative Images */}
           <div className="deco-gallery">
             <div className="deco-item img-1 reveal-on-scroll">
-              <img src="/nature4.jpg" alt="Landscape" loading="lazy" />
+              <img src="/nature4.jpg" alt="Landscape" />
             </div>
             <div className="deco-item img-2 reveal-on-scroll">
-              <img src="/nature5.jpg" alt="Waterfall" loading="lazy" />
+              <img src="/nature5.jpg" alt="Waterfall" />
             </div>
             <div className="deco-item img-3 reveal-on-scroll">
-              <img src="/nature3.jpg" alt="Nature" loading="lazy" />
+              <img src="/nature3.jpg" alt="Nature" />
             </div>
             <div className="deco-item img-4 reveal-on-scroll">
-              <img src="/nature6.jpg" alt="Mountains" loading="lazy" />
+              <img src="/nature6.jpg" alt="Mountains" />
             </div>
           </div>
 
