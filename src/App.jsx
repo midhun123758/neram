@@ -157,7 +157,7 @@ function App() {
         currentY = targetY
       } else {
         // High lerp for snappier mobile feel, smooth lerp for desktop
-        const lerpFactor = windowWidth <= 768 ? 0.35 : 0.12
+        const lerpFactor = windowWidth <= 768 ? 0.12 : 0.05
         currentY = lerp(currentY, targetY, lerpFactor) 
       }
 
