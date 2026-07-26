@@ -599,40 +599,7 @@ body {
   gap: 0.8rem; /* Decreased gap to bring the explanation closer to the heading */
 }
 
-/* Base styles for scroll reveal animation */
-.collage-content .collage-subtitle,
-.collage-content h2,
-.collage-content .collage-description,
-.collage-content .horizontal-indicator-btn {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 1.2s ease, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Active state for staggered reveal */
-.collage-content.reveal-active .collage-subtitle {
-  opacity: 1;
-  transform: translateY(0);
-  transition-delay: 1.2s; /* Starts as images are halfway through */
-}
-
-.collage-content.reveal-active h2 {
-  opacity: 1;
-  transform: translateY(0);
-  transition-delay: 1.5s;
-}
-
-.collage-content.reveal-active .collage-description {
-  opacity: 1;
-  transform: translateY(0);
-  transition-delay: 1.8s;
-}
-
-.collage-content.reveal-active .horizontal-indicator-btn {
-  opacity: 1;
-  transform: translateY(0);
-  transition-delay: 2.1s;
-}
+/* Removed scroll reveal animation to match Philosophy section styling */
 
 .collage-subtitle {
   font-family: 'Cinzel', serif;
