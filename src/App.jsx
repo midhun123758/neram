@@ -1,6 +1,7 @@
 import React, { Suspense, useEffect, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import FogOverlay from './components/FogOverlay'
+import SimpleRain from './components/SimpleRain'
 import PackagesPage from './PackagesPage'
 import ContactPage from './ContactPage'
 import ImagesPage from './ImagesPage'
@@ -93,7 +94,7 @@ function App() {
         
         if (appRef.current && contentRef.current) {
           const vh = windowHeight
-          const phase1_5End = vh * 1.0 // phases before dark content appears (faster)
+          const phase1_5End = vh * 0.7 // phases before dark content appears (faster)
           const contentH = contentRef.current.scrollHeight
           // We add vh to contentH because the dark section starts fully off-screen (at 100vh)
           // and needs 1 full vh of scrolling just to slide in to position.
@@ -138,8 +139,8 @@ function App() {
       lastWheelTime = Date.now()
       // Normalize across trackpads (small deltaY) and mice (large deltaY)
       const delta = Math.abs(e.deltaY) > 50
-        ? e.deltaY * 0.75  // mouse wheel — softer push for buttery feel
-        : e.deltaY * 1.2   // trackpad — slightly softened
+        ? e.deltaY * 0.95  // mouse wheel — slightly faster push
+        : e.deltaY * 1.4   // trackpad — slightly faster
       targetY += delta
       clampTarget()
     }
@@ -213,16 +214,16 @@ function App() {
       const vw = windowWidth
       const vh = windowHeight
 
-      // ── Phase 1 (0 → 0.6*vh): pan image top → bottom ────────────────────
-      const phase1End = vh * 0.6
+      // ── Phase 1 (0 → 0.4*vh): pan image top → bottom ────────────────────
+      const phase1End = vh * 0.4
       const phase1 = Math.min(Math.max(currentY / phase1End, 0), 1)
       if (imgRef.current) {
         // Use GPU-accelerated transform instead of expensive objectPosition paint
         imgRef.current.style.transform = `translateY(-${phase1 * 15}vh)`
       }
 
-      // ── Phase 1.5 (0.6*vh → 1.0*vh): smooth logo writing reveal ─────────
-      const phase1_5End = vh * 1.0
+      // ── Phase 1.5 (0.4*vh → 0.7*vh): smooth logo writing reveal ─────────
+      const phase1_5End = vh * 0.7
       const phase1_5 = Math.min(Math.max((currentY - phase1End) / (phase1_5End - phase1End), 0), 1)
 
       // ── Phase 2 (starts after 1.0*vh): scroll dark sections up ──────────
@@ -384,7 +385,8 @@ function App() {
             gl={{ antialias: false, powerPreference: 'high-performance', alpha: true }}
           >
             <Suspense fallback={null}>
-              <FogOverlay isRain={isRain} />
+              {!isRain && <FogOverlay isRain={isRain} />}
+              <SimpleRain isRain={isRain} />
             </Suspense>
           </Canvas>
         </div>
@@ -393,7 +395,7 @@ function App() {
       {/* Layer 2 — fixed navbar */}
       <div className="ui-overlay">
         <nav className="navbar">
-          <div className="logo" ref={navLogoRef} onClick={() => navigateTo('home')}>NERAM</div>
+          <div className="logo" ref={navLogoRef} onClick={() => { setIsRain(prev => !prev); navigateTo('home'); }}>NERAM</div>
           <div className="nav-controls">
             <button className="menu-btn" onClick={() => setIsMenuOpen(true)}>
               <span className="menu-text">menu</span>

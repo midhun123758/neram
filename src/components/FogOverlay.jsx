@@ -176,8 +176,8 @@ export default function FogOverlay({ isRain = false }) {
     const targetDensity = 0.9 + (logoBoost * 0.5);
     currentDensity.current += (targetDensity - currentDensity.current) * delta * 2.0;
 
-    // Transition rain mode smoothly
-    const targetRain = isRain ? 1.0 : 0.0;
+    // Disable built-in rain mode as per user request
+    const targetRain = 0.0;
     currentRainMode.current += (targetRain - currentRainMode.current) * delta * 1.5;
 
     if (materialRef.current) {
