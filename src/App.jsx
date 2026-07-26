@@ -6,7 +6,6 @@ import SimpleRain from './components/SimpleRain'
 // Lazy load the secondary pages so they aren't downloaded until the user needs them
 const PackagesPage = lazy(() => import('./PackagesPage'))
 const ContactPage = lazy(() => import('./ContactPage'))
-const ImagesPage = lazy(() => import('./ImagesPage'))
 import Footer from './Footer'
 import Sidebar from './Sidebar'
 import './index.css'
@@ -33,6 +32,9 @@ function App() {
   const pageRef = useRef('home')
   
   const navigateTo = (page) => {
+    if (page !== currentPage) {
+      setIsLoading(true)
+    }
     setCurrentPage(page)
     pageRef.current = page
     if (page === 'home') {
@@ -40,13 +42,14 @@ function App() {
     }
   }
 
-  // Handle Preloader
+  // Handle Preloader on every page navigation
   useEffect(() => {
+    setIsLoading(true)
     const timer = setTimeout(() => {
       setIsLoading(false)
-    }, 3000)
+    }, 2000)
     return () => clearTimeout(timer)
-  }, [])
+  }, [currentPage])
 
   // Handle local time
   const [time, setTime] = useState(new Date())
@@ -359,44 +362,40 @@ function App() {
     }
   }, [currentPage])
 
-  const fallbackLoader = (
-    <div className="preloader">
-      <div className="loader-line"></div>
+  const renderPreloader = () => (
+    <div className={`preloader ${!isLoading ? 'fade-out' : ''}`}>
+      <div className="preloader-logo">
+        NERAM<span className="preloader-dot">.in</span>
+      </div>
     </div>
   );
 
   if (currentPage === 'packages') {
     return (
-      <Suspense fallback={fallbackLoader}>
-        <PackagesPage navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
-      </Suspense>
+      <>
+        {renderPreloader()}
+        <Suspense fallback={null}>
+          <PackagesPage navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+        </Suspense>
+      </>
     );
   }
 
   if (currentPage === 'contact') {
     return (
-      <Suspense fallback={fallbackLoader}>
-        <ContactPage navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
-      </Suspense>
-    );
-  }
-
-  if (currentPage === 'images') {
-    return (
-      <Suspense fallback={fallbackLoader}>
-        <ImagesPage navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
-      </Suspense>
+      <>
+        {renderPreloader()}
+        <Suspense fallback={null}>
+          <ContactPage navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+        </Suspense>
+      </>
     );
   }
 
   return (
     <>
       {/* Preloader */}
-      <div className={`preloader ${!isLoading ? 'fade-out' : ''}`}>
-        <div className="preloader-logo">
-          NERAM<span className="preloader-dot">.in</span>
-        </div>
-      </div>
+      {renderPreloader()}
 
       <div className="ui-container" ref={appRef}>
 
