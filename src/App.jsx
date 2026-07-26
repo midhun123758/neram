@@ -1,10 +1,12 @@
-import React, { Suspense, useEffect, useRef, useState } from 'react'
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import FogOverlay from './components/FogOverlay'
 import SimpleRain from './components/SimpleRain'
-import PackagesPage from './PackagesPage'
-import ContactPage from './ContactPage'
-import ImagesPage from './ImagesPage'
+
+// Lazy load the secondary pages so they aren't downloaded until the user needs them
+const PackagesPage = lazy(() => import('./PackagesPage'))
+const ContactPage = lazy(() => import('./ContactPage'))
+const ImagesPage = lazy(() => import('./ImagesPage'))
 import Footer from './Footer'
 import Sidebar from './Sidebar'
 import './index.css'
@@ -41,7 +43,7 @@ function App() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false)
-    }, 1200)
+    }, 3000)
     return () => clearTimeout(timer)
   }, [])
 
@@ -342,16 +344,34 @@ function App() {
     }
   }, [currentPage])
 
+  const fallbackLoader = (
+    <div className="preloader">
+      <div className="loader-line"></div>
+    </div>
+  );
+
   if (currentPage === 'packages') {
-    return <PackagesPage navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />;
+    return (
+      <Suspense fallback={fallbackLoader}>
+        <PackagesPage navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+      </Suspense>
+    );
   }
 
   if (currentPage === 'contact') {
-    return <ContactPage navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />;
+    return (
+      <Suspense fallback={fallbackLoader}>
+        <ContactPage navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+      </Suspense>
+    );
   }
 
   if (currentPage === 'images') {
-    return <ImagesPage navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />;
+    return (
+      <Suspense fallback={fallbackLoader}>
+        <ImagesPage navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+      </Suspense>
+    );
   }
 
   return (
