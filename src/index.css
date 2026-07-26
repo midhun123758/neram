@@ -694,6 +694,21 @@ body {
   width: 100%;
 }
 
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.nav-time {
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.6);
+  opacity: 0;
+  animation: fadeIn 1.5s ease 0.5s forwards;
+}
+
 .logo {
   font-family: 'Cinzel', serif;
   font-size: 0.95rem;

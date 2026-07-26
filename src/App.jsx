@@ -19,6 +19,7 @@ function App() {
   const contentRef = useRef(null)
   const logoRef    = useRef(null)
   const navLogoRef = useRef(null)
+  const navTimeRef = useRef(null)
   const scrollIndicatorRef = useRef(null)
   const iframeRef = useRef(null)
 
@@ -45,6 +46,13 @@ function App() {
       setIsLoading(false)
     }, 3000)
     return () => clearTimeout(timer)
+  }, [])
+
+  // Handle local time
+  const [time, setTime] = useState(new Date())
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000)
+    return () => clearInterval(timer)
   }, [])
 
   // Handle Vimeo looping at 60%
@@ -265,13 +273,20 @@ function App() {
         if (logoPhase > 0) {
           // Disable CSS animation so inline opacity can take effect
           navLogoRef.current.style.animation = 'none'
+          if (navTimeRef.current) navTimeRef.current.style.animation = 'none'
           
           // Fade out the navbar text logo as the image logo comes to take its place
-          navLogoRef.current.style.opacity = Math.max(0, 1 - (logoPhase * 2))
+          const newOpacity = Math.max(0, 1 - (logoPhase * 2))
+          navLogoRef.current.style.opacity = newOpacity
+          if (navTimeRef.current) navTimeRef.current.style.opacity = newOpacity
         } else {
           // Allow initial CSS animation to run when at the top
           navLogoRef.current.style.animation = ''
           navLogoRef.current.style.opacity = ''
+          if (navTimeRef.current) {
+            navTimeRef.current.style.animation = ''
+            navTimeRef.current.style.opacity = ''
+          }
         }
       }
 
@@ -415,7 +430,10 @@ function App() {
       {/* Layer 2 — fixed navbar */}
       <div className="ui-overlay">
         <nav className="navbar">
-          <div className="logo" ref={navLogoRef} onClick={() => { setIsRain(prev => !prev); navigateTo('home'); }}>NERAM</div>
+          <div className="navbar-left">
+            <div className="logo" ref={navLogoRef} onClick={() => { setIsRain(prev => !prev); navigateTo('home'); }}>NERAM</div>
+            <div className="nav-time" ref={navTimeRef}>{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+          </div>
           <div className="nav-controls">
             <button className="menu-btn" onClick={() => setIsMenuOpen(true)}>
               <span className="menu-text">menu</span>
