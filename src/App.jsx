@@ -138,8 +138,8 @@ function App() {
       lastWheelTime = Date.now()
       // Normalize across trackpads (small deltaY) and mice (large deltaY)
       const delta = Math.abs(e.deltaY) > 50
-        ? e.deltaY * 0.9   // mouse wheel — faster and more responsive
-        : e.deltaY * 1.6   // trackpad
+        ? e.deltaY * 0.75  // mouse wheel — softer push for buttery feel
+        : e.deltaY * 1.2   // trackpad — slightly softened
       targetY += delta
       clampTarget()
     }
@@ -154,7 +154,7 @@ function App() {
       e.preventDefault()
       lastWheelTime = Date.now()
       const dy = touchStartY - e.touches[0].clientY
-      targetY += dy * 2.8 // Increased multiplier for much faster mobile scrolling
+      targetY += dy * 1.5 // Reduced multiplier for smoother mobile scrolling
       touchStartY = e.touches[0].clientY
       clampTarget()
     }
@@ -196,8 +196,8 @@ function App() {
       if (Math.abs(diff) < 0.2) {
         currentY = targetY
       } else {
-        // High lerp for snappier mobile feel, smooth lerp for desktop
-        const lerpFactor = windowWidth <= 768 ? 0.35 : 0.12
+        // Very low lerp factor for "buttery" smooth scroll
+        const lerpFactor = windowWidth <= 768 ? 0.08 : 0.05
         currentY = lerp(currentY, targetY, lerpFactor) 
       }
 
@@ -493,10 +493,12 @@ function App() {
                 Plan your next escape with us today.
               </p>
               
-              <div className="horizontal-indicator-btn" onClick={() => navigateTo('packages')} style={{ alignSelf: 'flex-start', marginTop: '1rem' }}>
-                <span>PACKAGES</span>
-                <div className="horizontal-indicator-line"></div>
-              </div>
+              <button className="primary-explore-btn" onClick={() => navigateTo('packages')} style={{ marginTop: '2rem' }}>
+                VIEW PACKAGES
+                <span className="btn-arrow">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </span>
+              </button>
             </div>
           </div>
         </div>
@@ -517,10 +519,12 @@ function App() {
                 At Neram, we don't just guide journeys across untamed landscapes; we curate experiences where time slows down, genuine connections are forged, and your inner nature is finally free to unfold.
               </p>
             </div>
-            <div className="horizontal-indicator-btn" onClick={() => navigateTo('contact')}>
-              <span>CONTACT</span>
-              <div className="horizontal-indicator-line"></div>
-            </div>
+            <button className="primary-explore-btn" onClick={() => navigateTo('contact')} style={{ marginTop: '2rem' }}>
+              CONTACT US
+              <span className="btn-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </span>
+            </button>
           </div>
         </div>
 

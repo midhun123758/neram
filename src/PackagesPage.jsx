@@ -18,7 +18,7 @@ const packagesData = [
     location: 'TROPICAL FORESTS',
     duration: '4 DAYS / 3 NIGHTS',
     description: 'Discover hidden gems and breathtaking landscapes with our guided tours through lush environments.',
-    image: '/new_tours.png'
+    image: '/snow_tour.jpg'
   },
   {
     id: 3,
